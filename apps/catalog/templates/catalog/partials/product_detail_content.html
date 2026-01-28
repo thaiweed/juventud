@@ -1,0 +1,76 @@
+<div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
+        <!-- Image Gallery -->
+        <div class="flex flex-col gap-4">
+            <div class="bg-gray-100 overflow-hidden relative">
+                {% if product.images.first %}
+                <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}"
+                    class="w-full object-contain object-center">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                {% endif %}
+            </div>
+            <!-- Thumbnails could go here -->
+        </div>
+
+        <!-- Product Details -->
+        <div class="flex flex-col">
+            <h1 class="text-3xl font-medium uppercase tracking-wide mb-4">{{ product.name }}</h1>
+            <p class="text-xl font-semibold mb-6">{{ product.price }} ₽</p>
+
+            <div class="prose prose-sm text-gray-600 mb-8">
+                {{ product.description|linebreaks }}
+            </div>
+
+            <!-- Specifications -->
+            <div class="mb-8 space-y-2 text-sm text-gray-600 border-t border-b border-gray-100 py-4">
+                {% if product.material %}
+                <div class="flex justify-between">
+                    <span>Material:</span>
+                    <span class="font-medium text-black">{{ product.material }}</span>
+                </div>
+                {% endif %}
+                {% if product.density %}
+                <div class="flex justify-between">
+                    <span>Density:</span>
+                    <span class="font-medium text-black">{{ product.density }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <form class="space-y-6">
+                {% if product.sizes.exists %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Size</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for size in product.sizes.all %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="size" value="{{ size.id }}" class="sr-only peer">
+                            <div class="px-4 py-2 border border-gray-200 text-sm font-medium uppercase 
+                                        peer-checked:bg-black peer-checked:text-white peer-checked:border-black
+                                        hover:border-black transition">
+                                {{ size.name }}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <button type="button" @click="$dispatch('open-cart')"
+                    class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium hover:bg-gray-800 transition">
+                    Add to Cart
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-gray-100">
+                <a href="{% url 'catalog:product_list' %}"
+                    class="text-sm text-gray-500 hover:text-black uppercase tracking-wider flex items-center gap-2"
+                    hx-get="{% url 'catalog:product_list' %}" hx-target="#main-content" hx-push-url="true"
+                    hx-boost="false">
+                    ← Back to Catalog
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

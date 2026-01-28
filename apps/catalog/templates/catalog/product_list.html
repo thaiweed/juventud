@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <!-- Category Filter -->
+    <div class="mb-8 flex flex-wrap justify-center gap-4 border-b border-gray-100 pb-4">
+        <a href="{% url 'catalog:product_list' %}"
+            class="uppercase text-xs tracking-wider font-medium {% if not current_category %}text-black border-b-2 border-black{% else %}text-gray-500 hover:text-black{% endif %}"
+            hx-get="{% url 'catalog:product_list' %}" hx-target="#main-content" hx-push-url="true">
+            All
+        </a>
+
+        {% for category in categories %}
+        <a href="{% url 'catalog:product_list_by_category' category.slug %}"
+            class="uppercase text-xs tracking-wider font-medium {% if current_category.slug == category.slug %}text-black border-b-2 border-black{% else %}text-gray-500 hover:text-black{% endif %}"
+            hx-get="{% url 'catalog:product_list_by_category' category.slug %}" hx-target="#main-content"
+            hx-push-url="true">
+            {{ category.name }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% include "catalog/partials/product_list_content.html" %}
+</div>
+{% endblock %}

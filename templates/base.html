@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+    <title>{% block title %}Juventud — одежда{% endblock %}</title>
+    <meta name="description" content="Juventud — одежда" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+    <!-- HTMX & Alpine.js -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Tailwind (CDN for now, can be replaced with build) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=7" />
+
+    <style>
+        /* Custom Tailwind config simulation if needed */
+        .brand-img {
+            max-height: 40px;
+        }
+
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body class="font-inter antialiased text-gray-900 bg-white" hx-boost="true">
+
+    <!-- Cart State (Global) -->
+    <div x-data="{ cartOpen: false }" @open-cart.window="cartOpen = true">
+
+        <header class="site-header border-b border-gray-200 py-4 sticky top-0 bg-white z-40">
+            <div class="container mx-auto px-4 flex justify-between items-center">
+                <a href="{% url 'catalog:product_list' %}" class="brand">
+                    <h1 class="text-2xl font-bold tracking-tighter">JUVENTUD</h1>
+                </a>
+
+                <nav class="flex gap-4">
+                    <button @click="cartOpen = true"
+                        class="uppercase text-sm tracking-wider font-medium hover:opacity-60 transition">
+                        Cart
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <main id="main-content" class="min-h-screen py-8">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="site-footer border-t border-gray-200 py-8 text-center text-sm text-gray-500">
+            <div class="container mx-auto px-4">
+                <span>© <span id="year">{% now "Y" %}</span> Juventud</span>
+                <br>
+                <a class="hover:text-black transition" href="mailto:juventudsupp@gmail.com">juventudsupp@gmail.com</a>
+            </div>
+        </footer>
+
+        <!-- Cart Modal -->
+        {% include 'partials/cart_modal.html' %}
+
+    </div>
+
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+</body>
+
+</html>

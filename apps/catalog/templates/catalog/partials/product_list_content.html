@@ -1,0 +1,41 @@
+<div id="product-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+    {% for product in products %}
+    <article class="card group cursor-pointer" hx-get="{% url 'catalog:product_detail' product.slug %}"
+        hx-target="#main-content" hx-push-url="true" hx-swap="innerHTML window:top">
+
+        <div class="image-wrap relative overflow-hidden bg-gray-100">
+            {% if product.images.first %}
+            <!-- Front image -->
+            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}"
+                class="w-full object-contain object-center transition-opacity duration-500 group-hover:opacity-0" />
+
+            <!-- Back image (on hover) -->
+            {% if product.images.all.1 %}
+            <img src="{{ product.images.all.1.image.url }}" alt="{{ product.name }} - back"
+                class="w-full object-contain object-center absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            {% endif %}
+            {% else %}
+            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                No Image
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card-body mt-4 text-center">
+            <h3 class="text-sm font-medium uppercase tracking-wide mb-1">{{ product.name }}</h3>
+            <p class="price font-semibold text-gray-900">
+                {{ product.price }} ₽
+            </p>
+        </div>
+    </article>
+    {% empty %}
+    <p class="col-span-full text-center py-10 text-gray-500">No products found.</p>
+    {% endfor %}
+</div>
+
+<!-- Pagination if needed -->
+{% if is_paginated %}
+<div class="mt-8 flex justify-center gap-2">
+    <!-- Basic pagination controls can be added here -->
+</div>
+{% endif %}
