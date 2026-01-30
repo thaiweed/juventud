@@ -55,14 +55,18 @@
 
         <header class="site-header border-b border-gray-200 py-4 sticky top-0 bg-white z-40">
             <div class="container mx-auto px-4 flex justify-between items-center">
-                <a href="{% url 'catalog:product_list' %}" class="brand">
+                <a href="{% url 'catalog:product_list' %}" class="brand"
+                   hx-get="{% url 'catalog:product_list' %}"
+                   hx-target="#main-content"
+                   hx-swap="innerHTML"
+                   hx-push-url="true">
                     <h1 class="text-2xl font-bold tracking-tighter">JUVENTUD</h1>
                 </a>
 
                 <nav class="flex gap-4">
                     <button @click="cartOpen = true"
-                        class="uppercase text-sm tracking-wider font-medium hover:opacity-60 transition">
-                        Cart
+                        class="uppercase text-sm tracking-wider font-medium hover:opacity-60 transition flex items-center">
+                        Cart<span id="cart-count">{% if cart %}<span class="ml-1 text-xs">({{ cart|length }})</span>{% endif %}</span>
                     </button>
                 </nav>
             </div>

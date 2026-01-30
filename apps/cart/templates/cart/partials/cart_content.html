@@ -1,0 +1,90 @@
+{% load static %}
+
+<div id="cart-content">
+    {% if cart %}
+    <div class="space-y-4">
+        {% for item in cart %}
+        <div class="flex gap-4 border-b border-gray-100 pb-4">
+            <div class="w-20 h-20 bg-gray-100 flex-shrink-0">
+                {% if item.product.images.first %}
+                <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}"
+                    class="w-full h-full object-contain">
+                {% endif %}
+            </div>
+
+            <div class="flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-sm font-medium uppercase">{{ item.product.name }}</h3>
+                    <p class="text-sm text-gray-600 mt-1">{{ item.price }} ₽</p>
+                </div>
+
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-2">
+                        <form hx-post="{% url 'cart:cart_update' item.product.id %}" hx-target="#cart-content"
+                            hx-swap="outerHTML">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="{{ item.quantity|add:'-1' }}">
+                            <button type="submit"
+                                class="w-6 h-6 border border-gray-300 flex items-center justify-center hover:bg-gray-100">
+                                <span class="text-sm">−</span>
+                            </button>
+                        </form>
+
+                        <span class="text-sm font-medium w-8 text-center">{{ item.quantity }}</span>
+
+                        <form hx-post="{% url 'cart:cart_update' item.product.id %}" hx-target="#cart-content"
+                            hx-swap="outerHTML">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="{{ item.quantity|add:'1' }}">
+                            <button type="submit"
+                                class="w-6 h-6 border border-gray-300 flex items-center justify-center hover:bg-gray-100">
+                                <span class="text-sm">+</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <form hx-post="{% url 'cart:cart_remove' item.product.id %}" hx-target="#cart-content"
+                        hx-swap="outerHTML">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-400 hover:text-black transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-right">
+                <p class="text-sm font-medium">{{ item.total_price }} ₽</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="flex justify-between text-lg font-medium mb-6">
+            <span>Subtotal</span>
+            <span>{{ cart.get_total_price }} ₽</span>
+        </div>
+        <button class="w-full bg-black text-white py-3 uppercase tracking-wider text-sm hover:bg-gray-800 transition">
+            Checkout
+        </button>
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+        </svg>
+        <p class="text-gray-500">Your cart is empty.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="cart-count" hx-swap-oob="true">
+    {% if cart %}
+    <span class="ml-1 text-xs">({{ cart|length }})</span>
+    {% endif %}
+</div>

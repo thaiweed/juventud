@@ -38,7 +38,9 @@
                 {% endif %}
             </div>
 
-            <form class="space-y-6">
+            <form class="space-y-6" hx-post="{% url 'cart:cart_add' product.id %}" hx-target="#cart-content"
+                hx-swap="outerHTML">
+                {% csrf_token %}
                 {% if product.sizes.exists %}
                 <div>
                     <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Size</h3>
@@ -57,7 +59,9 @@
                 </div>
                 {% endif %}
 
-                <button type="button" @click="$dispatch('open-cart')"
+                <input type="hidden" name="quantity" value="1">
+
+                <button type="submit"
                     class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium hover:bg-gray-800 transition">
                     Add to Cart
                 </button>

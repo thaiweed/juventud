@@ -1,0 +1,5 @@
+<div id="cart-count" hx-swap-oob="true">
+    {% if cart %}
+    <span class="ml-1 text-xs">({{ cart|length }})</span>
+    {% endif %}
+</div>

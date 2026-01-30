@@ -1,5 +1,6 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST, require_http_methods
+from django.http import HttpResponse
 from apps.catalog.models import Product
 from .cart import Cart
 
@@ -11,7 +12,9 @@ def cart_add(request, product_id):
     quantity = int(request.POST.get('quantity', 1))
     cart.add(product=product, quantity=quantity)
     
-    return render(request, 'cart/partials/cart_content.html', {'cart': cart})
+    response = render(request, 'cart/partials/cart_content.html', {'cart': cart})
+    response['HX-Trigger'] = 'open-cart'
+    return response
 
 
 @require_POST

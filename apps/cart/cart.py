@@ -35,15 +35,25 @@ class Cart:
     def __iter__(self):
         product_ids = self.cart.keys()
         products = Product.objects.filter(id__in=product_ids)
+        
+        # Create a map of product_id -> Product object for efficient lookup
+        product_map = {str(p.id): p for p in products}
+        
         cart = self.cart.copy()
         
-        for product in products:
-            cart[str(product.id)]['product'] = product
-        
-        for item in cart.values():
-            item['price'] = Decimal(item['price'])
-            item['total_price'] = item['price'] * item['quantity']
-            yield item
+        for product_id, item in cart.items():
+            # Create a shallow copy of the item to avoid mutating the session
+            item_copy = item.copy()
+            
+            # Convert price to Decimal for calculation/display
+            item_copy['price'] = Decimal(item['price'])
+            item_copy['total_price'] = item_copy['price'] * item_copy['quantity']
+            
+            # Attach the product object using the map
+            # Use .get() to handle potential missing products gracefully
+            item_copy['product'] = product_map.get(product_id)
+            
+            yield item_copy
 
     def __len__(self):
         return sum(item['quantity'] for item in self.cart.values())
