@@ -20,12 +20,14 @@ class NowPaymentsService:
         payload = {
             "price_amount": float(price_amount),
             "price_currency": price_currency,
-            "order_id": str(order_id),
             "order_description": order_description,
             "ipn_callback_url": ipn_callback_url,
             "success_url": success_url,
             "cancel_url": cancel_url
         }
+        
+        if order_id:
+            payload["order_id"] = str(order_id)
         
         try:
             response = requests.post(url, headers=headers, json=payload)

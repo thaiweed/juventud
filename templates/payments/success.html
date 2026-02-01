@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="main-content" class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="text-center p-8 max-w-md bg-white border border-black shadow-lg">
+        <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <h1 class="text-2xl font-bold mb-4 uppercase tracking-widest">Payment Successful!</h1>
+        <p class="text-gray-600 mb-6">Thank you for your order. We have received your payment and will process your order shortly.</p>
+        <a href="{% url 'catalog:product_list' %}" 
+           class="inline-block bg-black text-white px-8 py-3 uppercase tracking-wider text-sm hover:bg-gray-800 transition"
+           hx-get="{% url 'catalog:product_list' %}"
+           hx-target="#main-content"
+           hx-swap="innerHTML"
+           hx-push-url="true">
+            Continue Shopping
+        </a>
+    </div>
+</div>
+{% endblock %}

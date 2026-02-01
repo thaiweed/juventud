@@ -39,7 +39,8 @@
             </div>
 
             <form class="space-y-6" hx-post="{% url 'cart:cart_add' product.id %}" hx-target="#cart-content"
-                hx-swap="outerHTML">
+                hx-swap="outerHTML"
+                x-data="{ selectedSize: {% if product.sizes.exists %}''{% else %}'default'{% endif %} }">
                 {% csrf_token %}
                 {% if product.sizes.exists %}
                 <div>
@@ -47,7 +48,7 @@
                     <div class="flex flex-wrap gap-2">
                         {% for size in product.sizes.all %}
                         <label class="cursor-pointer">
-                            <input type="radio" name="size" value="{{ size.id }}" class="sr-only peer">
+                            <input type="radio" name="size" value="{{ size.id }}" class="sr-only peer" x-model="selectedSize">
                             <div class="px-4 py-2 border border-gray-200 text-sm font-medium uppercase 
                                         peer-checked:bg-black peer-checked:text-white peer-checked:border-black
                                         hover:border-black transition">
@@ -62,7 +63,8 @@
                 <input type="hidden" name="quantity" value="1">
 
                 <button type="submit"
-                    class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium hover:bg-gray-800 transition">
+                    class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="!selectedSize">
                     Add to Cart
                 </button>
             </form>

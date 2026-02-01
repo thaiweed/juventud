@@ -68,7 +68,12 @@
             <span>Subtotal</span>
             <span>{{ cart.get_total_price }} ₽</span>
         </div>
-        <button class="w-full bg-black text-white py-3 uppercase tracking-wider text-sm hover:bg-gray-800 transition">
+        <button class="w-full bg-black text-white py-3 uppercase tracking-wider text-sm hover:bg-gray-800 transition"
+                hx-get="{% url 'orders:order_create' %}"
+                hx-target="#main-content"
+                hx-swap="innerHTML"
+                hx-push-url="true"
+                @click="open = false">
             Checkout
         </button>
     </div>
