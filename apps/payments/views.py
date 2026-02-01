@@ -44,7 +44,7 @@ def payment_process(request):
             # Create Payment record
             Payment.objects.create(
                 order=order,
-                payment_id=invoice_data['id'],
+                transaction_id=invoice_data['id'],
                 payment_status='waiting',
                 price_amount=price_amount,
                 price_currency='usd'

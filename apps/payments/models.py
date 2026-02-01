@@ -15,7 +15,7 @@ class Payment(models.Model):
     )
 
     order = models.OneToOneField(Order, related_name='payment', on_delete=models.CASCADE)
-    payment_id = models.CharField(max_length=100, unique=True)
+    transaction_id = models.CharField(max_length=100, unique=True)
     payment_status = models.CharField(max_length=20, choices=STATUS_Choices, default='waiting')
     price_amount = models.DecimalField(max_digits=10, decimal_places=2)
     price_currency = models.CharField(max_length=10, default='usd')
@@ -26,4 +26,4 @@ class Payment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'Payment {self.payment_id} for Order {self.order.id}'
+        return f'Payment {self.transaction_id} for Order {self.order.id}'

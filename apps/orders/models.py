@@ -8,8 +8,15 @@ class Order(models.Model):
     address = models.CharField(max_length=250)
     postal_code = models.CharField(max_length=20)
     city = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default='')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, default='created', choices=(
+        ('created', 'Created'),
+        ('processing', 'Processing'),
+        ('shipped', 'Shipped'),
+        ('cancelled', 'Cancelled'),
+    ))
     paid = models.BooleanField(default=False)
     
     class Meta:
