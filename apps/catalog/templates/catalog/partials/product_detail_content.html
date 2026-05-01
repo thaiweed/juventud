@@ -1,21 +1,35 @@
 <div class="container mx-auto px-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
-        <!-- Image Gallery -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
+        x-data="productGallery({{ product_images_json }}, {{ product_colors_json }})">
+        {% load cache %}
+
         <!-- Image Gallery -->
         <div class="flex flex-col gap-4">
             <div class="bg-gray-100 overflow-hidden relative">
-                {% if product.images.first %}
-                <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}"
-                    class="w-full object-contain object-center">
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
-                {% endif %}
+                <template x-if="activeImages.length > 0">
+                    <img :src="activeImages[activeIndex].url" :alt="activeImages[activeIndex].alt"
+                        class="w-full object-contain object-center">
+                </template>
+                <template x-if="activeImages.length === 0">
+                    <div class="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                </template>
             </div>
-            <!-- Thumbnails could go here -->
+            <!-- Thumbnails -->
+            <div class="flex flex-wrap gap-2" x-show="activeImages.length > 1">
+                <template x-for="(img, i) in activeImages" :key="i">
+                    <button type="button"
+                        @click="activeIndex = i"
+                        :class="activeIndex === i ? 'border-black' : 'border-gray-200'"
+                        class="w-16 h-16 border-2 overflow-hidden flex-shrink-0 transition">
+                        <img :src="img.url" :alt="img.alt" class="w-full h-full object-cover">
+                    </button>
+                </template>
+            </div>
         </div>
 
         <!-- Product Details -->
         <div class="flex flex-col">
+            {% cache 600 product_info product.id %}
             <h1 class="text-3xl font-medium uppercase tracking-wide mb-4">{{ product.name }}</h1>
             <p class="text-xl font-semibold mb-6">{{ product.price }} ₽</p>
 
@@ -38,19 +52,51 @@
                 </div>
                 {% endif %}
             </div>
+            {% endcache %}
 
             <form class="space-y-6" hx-post="{% url 'cart:cart_add' product.id %}" hx-target="#cart-content"
                 hx-swap="outerHTML"
-                x-data="{ selectedSize: {% if product.sizes.exists %}''{% else %}'default'{% endif %} }">
+                x-data="{ selectedSize: {% if product.sizes.all %}''{% else %}'default'{% endif %} }">
                 {% csrf_token %}
-                {% if product.sizes.exists %}
+
+                <!-- Color Selector -->
+                {% if product.colors.all %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Color</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for color in product.colors.all %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="color" value="{{ color.id }}" class="sr-only peer"
+                                @change="$dispatch('color-change', { colorId: {{ color.id }} })">
+                            <div class="w-14 h-14 border-2 border-gray-200 overflow-hidden
+                                        peer-checked:border-black transition"
+                                title="{{ color.name }}">
+                                {% with color.images.all as color_imgs %}
+                                    {% if color_imgs %}
+                                        <img src="{{ color_imgs.0.image.url }}" alt="{{ color.name }}"
+                                            class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-400 p-1 text-center leading-tight">
+                                            {{ color.name }}
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Size Selector -->
+                {% if product.sizes.all %}
                 <div>
                     <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Size</h3>
                     <div class="flex flex-wrap gap-2">
                         {% for size in product.sizes.all %}
                         <label class="cursor-pointer">
                             <input type="radio" name="size" value="{{ size.id }}" class="sr-only peer" x-model="selectedSize">
-                            <div class="px-4 py-2 border border-gray-200 text-sm font-medium uppercase 
+                            <div class="px-4 py-2 border border-gray-200 text-sm font-medium uppercase
                                         peer-checked:bg-black peer-checked:text-white peer-checked:border-black
                                         hover:border-black transition">
                                 {{ size.name }}
@@ -81,3 +127,32 @@
         </div>
     </div>
 </div>
+
+<script>
+function productGallery(allImages, allColors) {
+    return {
+        allImages,
+        allColors,
+        selectedColorId: null,
+        activeIndex: 0,
+        get activeImages() {
+            if (this.selectedColorId === null) {
+                // Show universal images (no color) or all if none are color-tagged
+                const universal = this.allImages.filter(img => img.color_id === null);
+                return universal.length > 0 ? universal : this.allImages;
+            }
+            // Show images matching selected color + universal images
+            const colored = this.allImages.filter(img => img.color_id === this.selectedColorId);
+            const universal = this.allImages.filter(img => img.color_id === null);
+            const result = [...colored, ...universal];
+            return result.length > 0 ? result : this.allImages;
+        },
+        init() {
+            this.$el.addEventListener('color-change', (e) => {
+                this.selectedColorId = e.detail.colorId;
+                this.activeIndex = 0;
+            });
+        }
+    }
+}
+</script>

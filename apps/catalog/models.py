@@ -55,6 +55,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, related_name='images', on_delete=models.SET_NULL, null=True, blank=True)
     image = models.ImageField(upload_to='products/%Y/%m/%d')
     alt_text = models.CharField(max_length=255, blank=True)
     

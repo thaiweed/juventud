@@ -9,6 +9,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
+    fields = ['image', 'color', 'alt_text']
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):

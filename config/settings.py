@@ -51,6 +51,13 @@ INSTALLED_APPS = [
     "apps.payments",
 ]
 
+# CSRF and Proxy HTTPS configuration
+CSRF_TRUSTED_ORIGINS = [
+    "https://juventudonline.store",
+    "https://www.juventudonline.store",
+]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # ... existing settings ...
 
 MIDDLEWARE = [
@@ -167,6 +174,24 @@ CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/
 CELERY_RESULT_BACKEND = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_TIMEZONE = TIME_ZONE
 
+# Redis Caching Configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CART_SESSION_ID = 'cart'
+
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    INTERNAL_IPS = [
+        "127.0.0.1",
+    ]

@@ -6,6 +6,10 @@ import sys
 
 def main():
     """Run administrative tasks."""
+    venv_python = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'venv', 'bin', 'python')
+    if os.path.exists(venv_python) and sys.executable != venv_python:
+        os.execl(venv_python, venv_python, *sys.argv)
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     try:
         from django.core.management import execute_from_command_line

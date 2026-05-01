@@ -6,8 +6,8 @@
         {% for item in cart %}
         <div class="flex gap-4 border-b border-gray-100 pb-4">
             <div class="w-20 h-20 bg-gray-100 flex-shrink-0">
-                {% if item.product.images.first %}
-                <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}"
+                {% if item.product.images.all %}
+                <img src="{{ item.product.images.all.0.image.url }}" alt="{{ item.product.name }}"
                     class="w-full h-full object-contain">
                 {% endif %}
             </div>

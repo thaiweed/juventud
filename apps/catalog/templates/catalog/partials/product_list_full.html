@@ -1,4 +1,6 @@
 <div class="container mx-auto px-4">
+    {% load cache %}
+    {% cache 600 category_filters current_category.slug|default:"all" %}
     <!-- Category Filter -->
     <div class="mb-8 flex flex-wrap justify-center gap-4 border-b border-gray-100 pb-4">
         <a href="{% url 'catalog:product_list' %}"
@@ -16,6 +18,7 @@
         </a>
         {% endfor %}
     </div>
+    {% endcache %}
 
     {% include "catalog/partials/product_list_content.html" %}
 </div>
