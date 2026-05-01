@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="container mx-auto px-4">
+
+
     <!-- Category Filter -->
     <div class="mb-8 flex flex-wrap justify-center gap-4 border-b border-gray-100 pb-4">
         <a href="{% url 'catalog:product_list' %}"

@@ -53,16 +53,21 @@
     <!-- Cart State (Global) -->
     <div x-data="{ cartOpen: false }" @open-cart.window="cartOpen = true">
 
-        <header class="site-header border-b border-gray-200 py-4 sticky top-0 bg-white z-40">
-            <div class="container mx-auto px-4 flex justify-between items-center">
-                <a href="{% url 'catalog:product_list' %}" class="brand"
+        <header class="site-header border-b border-gray-200 py-10 sticky top-0 bg-white z-40">
+            <div class="container mx-auto px-4 relative flex items-center justify-between">
+                <!-- Left Spacer (for balance if needed, or just justify-between) -->
+                <div class="w-10"></div> 
+
+                <!-- Centered Logo -->
+                <a href="{% url 'catalog:product_list' %}" class="absolute left-1/2 transform -translate-x-1/2"
                    hx-get="{% url 'catalog:product_list' %}"
                    hx-target="#main-content"
                    hx-swap="innerHTML"
                    hx-push-url="true">
-                    <h1 class="text-2xl font-bold tracking-tighter">JUVENTUD</h1>
+                    <img src="{% static 'img/juventud_logo.png' %}" alt="JUVENTUD" class="h-24 md:h-32 object-contain">
                 </a>
 
+                <!-- Right Cart -->
                 <nav class="flex gap-4">
                     <button @click="cartOpen = true"
                         class="uppercase text-sm tracking-wider font-medium hover:opacity-60 transition flex items-center">
