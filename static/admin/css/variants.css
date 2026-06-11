@@ -1,0 +1,11 @@
+/*
+ * Показываем секцию вариантов только если has_multiple_colors включён.
+ * Используем JS ниже для динамической логики.
+ */
+
+/* Инлайн вариантов — по умолчанию скрыт */
+.inline-group[id*="variants"] {
+    margin-top: 20px;
+    border-top: 2px solid #417690;
+    padding-top: 10px;
+}

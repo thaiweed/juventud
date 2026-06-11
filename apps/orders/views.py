@@ -28,24 +28,25 @@ def order_create(request):
             
             # Clear the cart
             cart.clear()
-            
-            # Launch asynchronous task
+
+            # Send email — with fallback if Celery/Redis is not available
             from .tasks import send_order_created_email
-            send_order_created_email.delay(order.id)
-            
+            try:
+                send_order_created_email.delay(order.id)
+            except Exception:
+                # Celery unavailable — run synchronously
+                try:
+                    send_order_created_email(order.id)
+                except Exception:
+                    pass  # Email failure must not block the order flow
+
             # Set the order in the session
             request.session['order_id'] = order.id
-            
-            # Redirect to payment process
-            # For HTMX, we need to handle the redirect to the payment processing view
-            # The payment processing view will eventually redirect to external NOWPayments
-            
+
             payment_url = reverse('payments:process')
-            
+
             import json
             if is_htmx(request):
-                # Use HX-Location to trigger a client-side HTMX request to the new URL
-                # This maintains SPA behavior (no full reload)
                 response = HttpResponse(status=204)
                 response['HX-Location'] = json.dumps({
                     'path': payment_url,
@@ -53,7 +54,7 @@ def order_create(request):
                     'swap': 'innerHTML'
                 })
                 return response
-                
+
             return redirect('payments:process')
     else:
         form = OrderCreateForm()

@@ -1,14 +1,20 @@
+{% load cache %}
 <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
-        x-data="productGallery({{ product_images_json }}, {{ product_colors_json }})">
-        {% load cache %}
+        {% if has_variants %}
+        x-data="productGallery({{ product_variants_json }}, '{{ default_price }}')"
+        {% else %}
+        x-data="productGallerySimple({{ product_images_json }}, {{ product_sizes_json }}, '{{ default_price }}')"
+        {% endif %}
+    >
 
-        <!-- Image Gallery -->
+        <!-- ── Image Gallery ───────────────────── -->
         <div class="flex flex-col gap-4">
-            <div class="bg-gray-100 overflow-hidden relative">
+            <div class="bg-gray-100 overflow-hidden relative" style="aspect-ratio: 1/1;">
                 <template x-if="activeImages.length > 0">
-                    <img :src="activeImages[activeIndex].url" :alt="activeImages[activeIndex].alt"
-                        class="w-full object-contain object-center">
+                    <img :src="activeImages[activeIndex].url"
+                         :alt="activeImages[activeIndex].alt"
+                         class="w-full h-full object-contain object-center">
                 </template>
                 <template x-if="activeImages.length === 0">
                     <div class="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
@@ -27,11 +33,13 @@
             </div>
         </div>
 
-        <!-- Product Details -->
+        <!-- ── Details & Form ──────────────────────── -->
         <div class="flex flex-col">
             {% cache 600 product_info product.id %}
             <h1 class="text-3xl font-medium uppercase tracking-wide mb-4">{{ product.name }}</h1>
-            <p class="text-xl font-semibold mb-6">{{ product.price }} ₽</p>
+
+            <!-- Price (updated by Alpine.js) -->
+            <p class="text-xl font-semibold mb-6" x-text="activePrice + ' ₽'"></p>
 
             <div class="prose prose-sm text-gray-600 mb-8">
                 {{ product.description|linebreaks }}
@@ -54,64 +62,61 @@
             </div>
             {% endcache %}
 
-            <form class="space-y-6" hx-post="{% url 'cart:cart_add' product.id %}" hx-target="#cart-content"
-                hx-swap="outerHTML"
-                x-data="{ selectedSize: {% if product.sizes.all %}''{% else %}'default'{% endif %} }">
+            <form class="space-y-6"
+                  hx-post="{% url 'cart:cart_add' product.id %}"
+                  hx-target="#cart-content"
+                  hx-swap="outerHTML">
                 {% csrf_token %}
 
-                <!-- Color Selector -->
-                {% if product.colors.all %}
+                <!-- ── Color selector (only if has_variants) ── -->
+                {% if has_variants %}
                 <div>
                     <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Color</h3>
                     <div class="flex flex-wrap gap-2">
-                        {% for color in product.colors.all %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="color" value="{{ color.id }}" class="sr-only peer"
-                                @change="$dispatch('color-change', { colorId: {{ color.id }} })">
-                            <div class="w-14 h-14 border-2 border-gray-200 overflow-hidden
-                                        peer-checked:border-black transition"
-                                title="{{ color.name }}">
-                                {% with color.images.all as color_imgs %}
-                                    {% if color_imgs %}
-                                        <img src="{{ color_imgs.0.image.url }}" alt="{{ color.name }}"
-                                            class="w-full h-full object-cover">
-                                    {% else %}
-                                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-400 p-1 text-center leading-tight">
-                                            {{ color.name }}
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
-                        </label>
-                        {% endfor %}
+                        <template x-for="(variant, i) in variants" :key="variant.id">
+                            <button type="button"
+                                @click="selectVariant(i)"
+                                :class="selectedVariantIndex === i
+                                    ? 'border-black ring-1 ring-black'
+                                    : 'border-gray-200 hover:border-gray-400'"
+                                class="w-14 h-14 border-2 overflow-hidden flex-shrink-0 transition focus:outline-none">
+                                <img :src="variant.preview_url" :alt="'Variant ' + (i + 1)"
+                                     class="w-full h-full object-cover">
+                            </button>
+                        </template>
                     </div>
+                    <!-- Hidden field to pass variant id to cart -->
+                    <input type="hidden" name="variant_id" :value="selectedVariant ? selectedVariant.id : ''">
                 </div>
                 {% endif %}
 
-                <!-- Size Selector -->
-                {% if product.sizes.all %}
-                <div>
+                <!-- ── Size selector ───────────────────────── -->
+                <div x-show="activeSizes.length > 0">
                     <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Size</h3>
                     <div class="flex flex-wrap gap-2">
-                        {% for size in product.sizes.all %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="size" value="{{ size.id }}" class="sr-only peer" x-model="selectedSize">
-                            <div class="px-4 py-2 border border-gray-200 text-sm font-medium uppercase
-                                        peer-checked:bg-black peer-checked:text-white peer-checked:border-black
-                                        hover:border-black transition">
-                                {{ size.name }}
-                            </div>
-                        </label>
-                        {% endfor %}
+                        <template x-for="s in activeSizes" :key="s.id">
+                            <label class="cursor-pointer" :class="!s.available ? 'opacity-40 pointer-events-none' : ''">
+                                <input type="radio" name="size" :value="s.id"
+                                       class="sr-only peer"
+                                       x-model="selectedSizeId"
+                                       :disabled="!s.available">
+                                <div class="px-4 py-2 border border-gray-200 text-sm font-medium uppercase
+                                            peer-checked:bg-black peer-checked:text-white peer-checked:border-black
+                                            hover:border-black transition"
+                                     :class="!s.available ? 'line-through' : ''"
+                                     x-text="s.name">
+                                </div>
+                            </label>
+                        </template>
                     </div>
                 </div>
-                {% endif %}
 
                 <input type="hidden" name="quantity" value="1">
 
                 <button type="submit"
-                    class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!selectedSize">
+                    class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium
+                           hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="activeSizes.length > 0 && !selectedSizeId">
                     Add to Cart
                 </button>
             </form>
@@ -129,30 +134,51 @@
 </div>
 
 <script>
-function productGallery(allImages, allColors) {
+// ── Mode: color variants ─────────────────────────────────────────
+function productGallery(variants, defaultPrice) {
     return {
-        allImages,
-        allColors,
-        selectedColorId: null,
+        variants,
+        defaultPrice,
+        selectedVariantIndex: variants.length > 0 ? 0 : null,
+        selectedSizeId: '',
         activeIndex: 0,
-        get activeImages() {
-            if (this.selectedColorId === null) {
-                // Show universal images (no color) or all if none are color-tagged
-                const universal = this.allImages.filter(img => img.color_id === null);
-                return universal.length > 0 ? universal : this.allImages;
-            }
-            // Show images matching selected color + universal images
-            const colored = this.allImages.filter(img => img.color_id === this.selectedColorId);
-            const universal = this.allImages.filter(img => img.color_id === null);
-            const result = [...colored, ...universal];
-            return result.length > 0 ? result : this.allImages;
+
+        get selectedVariant() {
+            return this.selectedVariantIndex !== null ? this.variants[this.selectedVariantIndex] : null;
         },
+        get activeImages() {
+            return this.selectedVariant ? this.selectedVariant.images : [];
+        },
+        get activeSizes() {
+            return this.selectedVariant ? this.selectedVariant.sizes : [];
+        },
+        get activePrice() {
+            return this.selectedVariant ? this.selectedVariant.price : this.defaultPrice;
+        },
+
+        selectVariant(index) {
+            this.selectedVariantIndex = index;
+            this.activeIndex = 0;
+            this.selectedSizeId = '';
+        },
+
         init() {
-            this.$el.addEventListener('color-change', (e) => {
-                this.selectedColorId = e.detail.colorId;
-                this.activeIndex = 0;
-            });
+            // Auto-select first variant
+            if (this.variants.length > 0) {
+                this.selectVariant(0);
+            }
         }
+    }
+}
+
+// ── Mode: simple product (no variants) ──────────────────────────────────
+function productGallerySimple(images, sizes, defaultPrice) {
+    return {
+        activeImages: images,
+        activeSizes: sizes,
+        activePrice: defaultPrice,
+        selectedSizeId: sizes.length === 0 ? 'default' : '',
+        activeIndex: 0,
     }
 }
 </script>

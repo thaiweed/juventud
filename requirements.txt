@@ -5,6 +5,7 @@ celery==5.3.6
 redis==5.0.1
 django-redis==5.4.0
 django-debug-toolbar==6.3.0
+django-nested-admin==4.1.0
 Pillow==11.3.0
 requests==2.32.5
 gunicorn==21.2.0

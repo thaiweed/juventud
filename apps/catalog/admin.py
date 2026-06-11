@@ -1,28 +1,89 @@
 from django.contrib import admin
-from .models import Category, Product, ProductImage, Size, Color
+import nested_admin
+
+from .models import (
+    Category, Product, ProductImage, Size, Color,
+    ProductVariant, VariantImage, VariantSize,
+)
+
+
+# ──────────────────────────────────────────────
+#  Старые инлайны (оставлены для обратной совместимости)
+# ──────────────────────────────────────────────
+
+class ProductImageInline(nested_admin.NestedTabularInline):
+    model = ProductImage
+    extra = 0
+    fields = ['image', 'alt_text']
+
+
+# ──────────────────────────────────────────────
+#  Вложенные инлайны для цветовых вариантов
+# ──────────────────────────────────────────────
+
+class VariantImageInline(nested_admin.NestedTabularInline):
+    model = VariantImage
+    extra = 1
+    fields = ['image', 'alt_text', 'order']
+
+
+class VariantSizeInline(nested_admin.NestedTabularInline):
+    model = VariantSize
+    extra = 0
+    fields = ['size', 'available']
+
+
+class ProductVariantInline(nested_admin.NestedStackedInline):
+    model = ProductVariant
+    extra = 0
+    fields = ['preview_image', 'price_override', 'order']
+    inlines = [VariantImageInline, VariantSizeInline]
+    show_change_link = False
+
+
+# ──────────────────────────────────────────────
+#  Основные регистрации
+# ──────────────────────────────────────────────
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
 
-class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 1
-    fields = ['image', 'color', 'alt_text']
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'price', 'category', 'available', 'material', 'density', 'created_at']
-    list_filter = ['available', 'created_at', 'category']
+class ProductAdmin(nested_admin.NestedModelAdmin):
+    list_display = ['name', 'price', 'category', 'available', 'has_multiple_colors', 'created_at']
+    list_filter = ['available', 'has_multiple_colors', 'created_at', 'category']
     list_editable = ['price', 'available']
     prepopulated_fields = {'slug': ('name',)}
-    inlines = [ProductImageInline]
-    filter_horizontal = ('sizes', 'colors')
+    fieldsets = (
+        (None, {
+            'fields': (
+                'category', 'name', 'slug', 'description',
+                'price', 'available', 'material', 'density',
+            )
+        }),
+        ('Цветовые варианты', {
+            'fields': ('has_multiple_colors',),
+            'description': (
+                'Включите, если товар имеет несколько цветовых вариантов. '
+                'После сохранения появятся поля для добавления вариантов ниже.'
+            ),
+        }),
+    )
+    inlines = [ProductImageInline, ProductVariantInline]
+
+    class Media:
+        css = {
+            'all': ('admin/css/variants.css',)
+        }
+
 
 @admin.register(Size)
 class SizeAdmin(admin.ModelAdmin):
     pass
+
 
 @admin.register(Color)
 class ColorAdmin(admin.ModelAdmin):

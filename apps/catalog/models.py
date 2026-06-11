@@ -41,7 +41,8 @@ class Product(models.Model):
     
     sizes = models.ManyToManyField(Size, blank=True)
     colors = models.ManyToManyField(Color, blank=True)
-    
+    has_multiple_colors = models.BooleanField(default=False, verbose_name='Несколько цветов')
+
     material = models.CharField(max_length=100, blank=True, null=True)
     density = models.CharField(max_length=50, blank=True, null=True) # e.g. 300 g/m2
 
@@ -61,3 +62,80 @@ class ProductImage(models.Model):
     
     def __str__(self):
         return f"Image for {self.product.name}"
+
+
+# ──────────────────────────────────────────────
+#  Цветовые варианты
+# ──────────────────────────────────────────────
+
+class ProductVariant(models.Model):
+    """Цветовой вариант товара."""
+    product = models.ForeignKey(
+        Product, related_name='variants', on_delete=models.CASCADE,
+        verbose_name='Товар'
+    )
+    preview_image = models.ImageField(
+        upload_to='variants/previews/%Y/%m/',
+        verbose_name='Превью цвета',
+        help_text='Маленькое изображение, используемое как кнопка выбора цвета'
+    )
+    price_override = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        null=True, blank=True,
+        verbose_name='Цена (переопределить)',
+        help_text='Оставьте пустым, чтобы использовать основную цену товара'
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Цветовой вариант'
+        verbose_name_plural = 'Цветовые варианты'
+
+    @property
+    def effective_price(self):
+        return self.price_override if self.price_override is not None else self.product.price
+
+    def __str__(self):
+        return f"Вариант #{self.pk} — {self.product.name}"
+
+
+class VariantImage(models.Model):
+    """Фотография галереи конкретного цветового варианта."""
+    variant = models.ForeignKey(
+        ProductVariant, related_name='images', on_delete=models.CASCADE,
+        verbose_name='Вариант'
+    )
+    image = models.ImageField(upload_to='variants/gallery/%Y/%m/', verbose_name='Изображение')
+    alt_text = models.CharField(max_length=255, blank=True, verbose_name='Alt-текст')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Фото варианта'
+        verbose_name_plural = 'Фото варианта'
+
+    def __str__(self):
+        return f"Фото для {self.variant}"
+
+
+class VariantSize(models.Model):
+    """Размер, доступный для конкретного цветового варианта."""
+    variant = models.ForeignKey(
+        ProductVariant, related_name='sizes', on_delete=models.CASCADE,
+        verbose_name='Вариант'
+    )
+    size = models.ForeignKey(
+        Size, on_delete=models.CASCADE,
+        verbose_name='Размер'
+    )
+    available = models.BooleanField(default=True, verbose_name='В наличии')
+
+    class Meta:
+        unique_together = ('variant', 'size')
+        verbose_name = 'Размер варианта'
+        verbose_name_plural = 'Размеры варианта'
+
+    def __str__(self):
+        status = '✓' if self.available else '✗'
+        return f"{self.size.name} {status}"
