@@ -21,6 +21,13 @@
                 No Image
             </div>
             {% endif %}
+
+            {% if product.sold_out %}
+            <!-- Sold Out overlay -->
+            <div class="absolute inset-0 flex items-center justify-center bg-white/60 pointer-events-none">
+                <span class="text-xs font-semibold uppercase tracking-widest text-gray-800 border border-gray-800 px-3 py-1">Sold Out</span>
+            </div>
+            {% endif %}
         </div>
 
         <div class="card-body mt-4 text-center">

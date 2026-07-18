@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from apps.catalog.models import Product
 
@@ -18,6 +19,25 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ))
     paid = models.BooleanField(default=False)
+
+    # C-2: session ownership — used to verify the requester owns this order
+    # Prevents IDOR: attacker cannot pay for someone else's order by guessing order_id
+    session_key = models.CharField(
+        max_length=40,
+        blank=True,
+        default='',
+        db_index=True,
+        help_text='Django session key at order creation time',
+    )
+
+    # L-1: non-enumerable public identifier (UUID)
+    # Prevents order count disclosure via sequential integer IDs
+    public_id = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text='Public-facing UUID — safe to expose in URLs/emails',
+    )
     
     class Meta:
         ordering = ['-created']
@@ -37,6 +57,8 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, related_name='order_items', on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1)
+    color = models.CharField(max_length=50, blank=True, default='', verbose_name='Цвет')
+    size = models.CharField(max_length=20, blank=True, default='', verbose_name='Размер')
 
     def __str__(self):
         return str(self.id)

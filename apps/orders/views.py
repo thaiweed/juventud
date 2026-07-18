@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
+from django_ratelimit.decorators import ratelimit
 from .models import OrderItem
 from .forms import OrderCreateForm
 from apps.cart.cart import Cart
@@ -7,6 +9,9 @@ from apps.cart.cart import Cart
 def is_htmx(request):
     return request.headers.get('HX-Request') == 'true'
 
+# H-2: limit order creation — 5 POST attempts per minute per IP.
+# Prevents mass order spam that would flood the DB and consume MailerSend quota.
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def order_create(request):
     cart = Cart(request)
     if len(cart) == 0:
@@ -21,10 +26,22 @@ def order_create(request):
         if form.is_valid():
             order = form.save()
             for item in cart:
+                # Always fetch current price from the DB at order creation time.
+                # This prevents price manipulation via stale session data or
+                # admin price changes between cart add and checkout.
+                product = item['product']
+                variant = item.get('variant')
+                if variant is not None:
+                    current_price = variant.effective_price
+                else:
+                    current_price = product.price
+
                 OrderItem.objects.create(order=order,
-                                         product=item['product'],
-                                         price=item['price'],
-                                         quantity=item['quantity'])
+                                         product=product,
+                                         price=current_price,
+                                         quantity=item['quantity'],
+                                         color=item['color_name'],
+                                         size=item['size_name'])
             
             # Clear the cart
             cart.clear()
@@ -40,7 +57,16 @@ def order_create(request):
                 except Exception:
                     pass  # Email failure must not block the order flow
 
-            # Set the order in the session
+            # M-3: Rotate session key to prevent session fixation.
+            # An attacker who captured the old session cookie loses access.
+            request.session.cycle_key()
+
+            # C-2: Bind the order to the new session key.
+            # payment_process() will verify this to prevent IDOR.
+            order.session_key = request.session.session_key
+            order.save(update_fields=['session_key'])
+
+            # Set the order in the session (after cycle_key so keys match)
             request.session['order_id'] = order.id
 
             payment_url = reverse('payments:process')

@@ -36,6 +36,8 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     available = models.BooleanField(default=True)
+    sold_out = models.BooleanField(default=False, verbose_name='Sold Out')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -50,6 +52,9 @@ class Product(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['order', 'created_at']
 
     def __str__(self):
         return self.name
@@ -73,6 +78,11 @@ class ProductVariant(models.Model):
     product = models.ForeignKey(
         Product, related_name='variants', on_delete=models.CASCADE,
         verbose_name='Товар'
+    )
+    color = models.ForeignKey(
+        Color, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='Цвет',
+        related_name='variants'
     )
     preview_image = models.ImageField(
         upload_to='variants/previews/%Y/%m/',

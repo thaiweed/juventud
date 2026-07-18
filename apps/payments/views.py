@@ -1,134 +1,143 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
+"""
+Payments Views — только HTTP-слой.
+
+Ответственность views:
+    - Получить данные из request
+    - Вызвать PaymentService или webhook-обработчик
+    - Вернуть HttpResponse
+
+Что views НЕ делают:
+    - Не создают объекты Payment напрямую
+    - Не знают о NowPayments, YooKassa или любом другом провайдере
+    - Не содержат бизнес-логику
+"""
+
+import logging
+
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from apps.orders.models import Order
-from .models import Payment
-from .services import NowPaymentsService
-import json
+from django_ratelimit.decorators import ratelimit
 
-def is_htmx(request):
+from apps.orders.models import Order
+from apps.payments.providers.base import PaymentProviderError
+from apps.payments.services.payment_service import PaymentService
+from apps.payments.utils.registry import get_payment_provider
+from apps.payments.webhooks.handlers import handle_payment_webhook
+
+logger = logging.getLogger(__name__)
+
+
+def _is_htmx(request) -> bool:
     return request.headers.get('HX-Request') == 'true'
 
+
+# H-2: limit payment initiation — 3 POST per minute per IP.
+# Prevents exhausting the payment provider API quota and creating ghost payments.
+@ratelimit(key='ip', rate='3/m', method='POST', block=True)
 def payment_process(request):
+    """
+    Инициирует создание платежа.
+
+    GET  → показывает страницу подтверждения заказа
+    POST → создаёт платёж через PaymentService, редиректит на провайдера
+    """
     order_id = request.session.get('order_id')
-    order = get_object_or_404(Order, id=order_id)
-    
+    # C-2: verify the current session owns this order (IDOR protection).
+    # order_id is a predictable integer — without session_key check an attacker
+    # could pay for any order by simply setting order_id in their session.
+    order = get_object_or_404(
+        Order,
+        id=order_id,
+        session_key=request.session.session_key,
+    )
+
     if request.method == 'POST':
-        service = NowPaymentsService()
-
-        domain = request.build_absolute_uri('/')[:-1]
-        ipn_url = f"{domain}/payments/ipn/"
-        success_url = f"{domain}/payments/success/"
-        cancel_url = f"{domain}/payments/cancel/"
-
-        price_amount = order.get_total_cost()
+        provider = get_payment_provider()
+        service = PaymentService(provider)
 
         try:
-            invoice_data = service.create_invoice(
-                order_id=None,
-                price_amount=price_amount,
-                price_currency='rub',
-                order_description='Juventud Clothing',
-                ipn_callback_url=ipn_url,
-                success_url=success_url,
-                cancel_url=cancel_url
-            )
+            redirect_url = service.initiate_payment(order, request)
+        except PaymentProviderError as e:
+            logger.error("Payment initiation failed for order #%s: %s", order.id, e)
+            error_msg = 'Could not create payment. Please try again later.'
+
+            if _is_htmx(request):
+                return HttpResponse(
+                    f'<p class="text-red-500 text-center py-8">{error_msg}</p>'
+                )
+            return render(request, 'payments/process.html', {
+                'order': order,
+                'error': error_msg,
+            })
         except Exception as e:
-            invoice_data = None
+            logger.exception("Unexpected error during payment initiation: %s", e)
+            error_msg = 'An unexpected error occurred. Please try again later.'
 
-        if invoice_data and 'invoice_url' in invoice_data:
-            Payment.objects.create(
-                order=order,
-                transaction_id=invoice_data['id'],
-                payment_status='waiting',
-                price_amount=price_amount,
-                price_currency='rub'
-            )
-            response = HttpResponse(status=200)
-            response['HX-Redirect'] = invoice_data['invoice_url']
-            return response
-        else:
-            error_msg = 'Could not create payment invoice. Please try again later.'
-            if is_htmx(request):
-                return HttpResponse(f'<p class="text-red-500 text-center py-8">{error_msg}</p>')
-            return render(request, 'payments/process.html', {'order': order, 'error': error_msg})
-            
-    # GET Request
+            if _is_htmx(request):
+                return HttpResponse(
+                    f'<p class="text-red-500 text-center py-8">{error_msg}</p>'
+                )
+            return render(request, 'payments/process.html', {
+                'order': order,
+                'error': error_msg,
+            })
+
+        # Редирект на страницу оплаты провайдера
+        response = HttpResponse(status=200)
+        response['HX-Redirect'] = redirect_url
+        return response
+
+    # GET
     context = {'order': order}
-    if is_htmx(request):
+    if _is_htmx(request):
         return render(request, 'payments/partials/process_content.html', context)
-
     return render(request, 'payments/process.html', context)
 
 
 @csrf_exempt
 @require_POST
-def payment_ipn(request):
-    service = NowPaymentsService()
-    
-    # Check signature
-    x_signature = request.headers.get('x-nowpayments-sig')
-    if not x_signature:
-        return HttpResponseBadRequest('No signature provided')
-        
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return HttpResponseBadRequest('Invalid JSON')
-        
-    if not service.check_signature(data, x_signature):
-        return HttpResponseBadRequest('Invalid signature')
-        
-    # Process status update
-    # Data contains: payment_status, payment_id, order_id, etc.
-    payment_id = data.get('payment_id') # This might be invoice ID or payment ID depending on flow
-    # In 'create_invoice', we get 'id' which is invoice ID.
-    # IPN sends 'payment_id' if a payment is made on that invoice?
-    # Or 'parent_payment_id'?
-    # Let's verify data structure from documentation or assume standard fields.
-    # Doc says: "The body of the request is similiar to a get payment status response body."
-    
-    status = data.get('payment_status')
-    order_id = data.get('order_id')
-    invoice_id = data.get('id')
-    
-    payment = None
-    order = None
+def payment_webhook(request):
+    """
+    Обрабатывает входящие webhook-уведомления от активного провайдера.
 
-    try:
-        if invoice_id:
-            payment = Payment.objects.filter(transaction_id=invoice_id).last()
-        
-        if not payment and order_id:
-            order = Order.objects.get(id=order_id)
-            payment = Payment.objects.get(order=order)
-            
-        if payment:
-            order = payment.order
-            
-            payment.payment_status = status
-            payment.pay_amount = data.get('pay_amount')
-            payment.pay_currency = data.get('pay_currency')
-            payment.pay_address = data.get('pay_address')
-            payment.save()
-            
-            if status == 'finished' or status == 'confirmed':
-                order.paid = True
-                order.save()
-                # Send success email
-                from apps.orders.tasks import send_payment_success_email
-                send_payment_success_email.delay(order.id)
-                
-    except (Order.DoesNotExist, Payment.DoesNotExist):
-        pass # Log error
-            
+    Вся логика (верификация, парсинг, обновление БД) вынесена в
+    apps/payments/webhooks/handlers.py.
+
+    Endpoint: POST /payments/webhook/
+    """
+    provider = get_payment_provider()
+    success, message = handle_payment_webhook(provider, request)
+
+    if not success:
+        logger.warning("Webhook processing failed: %s", message)
+        return HttpResponseBadRequest(message)
+
     return HttpResponse('OK')
+
+
+# Оставлен для обратной совместимости (старый URL /payments/ipn/)
+# TODO: удалить после обновления webhook URL в NowPayments dashboard
+@csrf_exempt
+@require_POST
+def payment_ipn(request):
+    """
+    [DEPRECATED] Используйте /payments/webhook/ вместо /payments/ipn/.
+
+    Оставлен для обратной совместимости — NowPayments dashboard
+    может ещё отправлять на старый URL.
+    """
+    logger.warning(
+        "Deprecated /payments/ipn/ endpoint called. "
+        "Please update webhook URL to /payments/webhook/ in NowPayments dashboard."
+    )
+    return payment_webhook(request)
 
 
 def payment_success(request):
     return render(request, 'payments/success.html')
+
 
 def payment_cancel(request):
     return render(request, 'payments/cancel.html')

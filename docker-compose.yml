@@ -20,6 +20,8 @@ services:
     image: redis:7-alpine
     container_name: juventud_redis
     restart: always
+    # L-3: require password — prevents unauthorized access if network isolation ever fails
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     expose:
       - "6379"
 

@@ -20,6 +20,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.views.generic import TemplateView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("nested_admin/", include("nested_admin.urls")),
@@ -27,6 +29,8 @@ urlpatterns = [
     path("cart/", include("apps.cart.urls", namespace="cart")),
     path("orders/", include("apps.orders.urls", namespace="orders")),
     path("payments/", include("apps.payments.urls", namespace="payments")),
+    path("legal/offer/", TemplateView.as_view(template_name="legal/offer.html"), name="legal_offer"),
+    path("legal/privacy/", TemplateView.as_view(template_name="legal/privacy.html"), name="legal_privacy"),
 ]
 
 if settings.DEBUG:

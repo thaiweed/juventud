@@ -36,7 +36,7 @@ class VariantSizeInline(nested_admin.NestedTabularInline):
 class ProductVariantInline(nested_admin.NestedStackedInline):
     model = ProductVariant
     extra = 0
-    fields = ['preview_image', 'price_override', 'order']
+    fields = ['color', 'preview_image', 'price_override', 'order']
     inlines = [VariantImageInline, VariantSizeInline]
     show_change_link = False
 
@@ -53,15 +53,18 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['name', 'price', 'category', 'available', 'has_multiple_colors', 'created_at']
-    list_filter = ['available', 'has_multiple_colors', 'created_at', 'category']
-    list_editable = ['price', 'available']
+    list_display = ['name', 'order', 'price', 'category', 'available', 'sold_out', 'has_multiple_colors', 'created_at']
+    list_filter = ['available', 'sold_out', 'has_multiple_colors', 'created_at', 'category']
+    list_editable = ['order', 'price', 'available', 'sold_out']
+    ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
+    filter_horizontal = ['sizes', 'colors']
     fieldsets = (
         (None, {
             'fields': (
                 'category', 'name', 'slug', 'description',
-                'price', 'available', 'material', 'density',
+                'price', 'available', 'sold_out', 'order', 'material', 'density',
+                'sizes', 'colors',
             )
         }),
         ('Цветовые варианты', {

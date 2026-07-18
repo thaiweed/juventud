@@ -1,16 +1,25 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST, require_http_methods
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
+from django_ratelimit.decorators import ratelimit
 from apps.catalog.models import Product
 from .cart import Cart
 
 
+# H-2: 30 cart additions per minute is generous for real users but stops bots
+@ratelimit(key='ip', rate='30/m', method='POST', block=True)
 @require_POST
 def cart_add(request, product_id):
     cart = Cart(request)
     product = get_object_or_404(Product, id=product_id)
-    quantity = int(request.POST.get('quantity', 1))
-    cart.add(product=product, quantity=quantity)
+    # H-3: validate quantity to prevent HTTP 500 on malformed input
+    try:
+        quantity = max(1, int(request.POST.get('quantity', 1)))
+    except (ValueError, TypeError):
+        return HttpResponseBadRequest('Invalid quantity')
+    variant_id = request.POST.get('variant_id') or None
+    size_id = request.POST.get('size') or None
+    cart.add(product=product, quantity=quantity, variant_id=variant_id, size_id=size_id)
     
     response = render(request, 'cart/partials/cart_content.html', {'cart': cart})
     response['HX-Trigger'] = 'open-cart'
@@ -18,24 +27,26 @@ def cart_add(request, product_id):
 
 
 @require_POST
-def cart_remove(request, product_id):
+def cart_remove(request, item_key):
     cart = Cart(request)
-    product = get_object_or_404(Product, id=product_id)
-    cart.remove(product)
+    cart.remove(item_key)
     
     return render(request, 'cart/partials/cart_content.html', {'cart': cart})
 
 
 @require_POST
-def cart_update(request, product_id):
+def cart_update(request, item_key):
     cart = Cart(request)
-    product = get_object_or_404(Product, id=product_id)
-    quantity = int(request.POST.get('quantity', 1))
+    # H-3: validate quantity to prevent HTTP 500 on malformed input
+    try:
+        quantity = max(0, int(request.POST.get('quantity', 1)))
+    except (ValueError, TypeError):
+        return HttpResponseBadRequest('Invalid quantity')
     
     if quantity > 0:
-        cart.add(product=product, quantity=quantity, update_quantity=True)
+        cart.update_quantity(item_key=item_key, quantity=quantity)
     else:
-        cart.remove(product)
+        cart.remove(item_key)
     
     return render(request, 'cart/partials/cart_content.html', {'cart': cart})
 

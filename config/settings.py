@@ -31,9 +31,30 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=lambda v: [s.strip() fo
 
 # Production Security Settings
 if not DEBUG:
+    # HTTPS enforcement
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+    # HTTP Strict Transport Security (H-1)
+    # Tells browsers to always use HTTPS for 1 year; enable preload after testing
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Prevent MIME-type sniffing (H-1)
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    # Clickjacking protection (H-1)
+    X_FRAME_OPTIONS = 'DENY'
+
+    # Limit Referer header to same origin (H-1)
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+# Session settings (M-4)
+# Cart and order_id live in session — 3 days is a reasonable shop window
+SESSION_COOKIE_AGE = 86400 * 3     # 3 days
+SESSION_SAVE_EVERY_REQUEST = True   # extend on every request (keep-alive)
 
 
 # Application definition
@@ -46,6 +67,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "nested_admin",
+    "django_ratelimit",
     "apps.catalog",
     "apps.cart",
     "apps.orders",
@@ -73,9 +95,19 @@ MIDDLEWARE = [
 
 # ...
 
-# NOWPayments Settings
+# ── Платёжная подсистема ──────────────────────────────────────────────
+# Активный провайдер: "nowpayments" или "yookassa"
+# Установить в .env: PAYMENT_PROVIDER=nowpayments
+PAYMENT_PROVIDER = config('PAYMENT_PROVIDER', default='nowpayments')
+
+# NowPayments (активен по умолчанию)
 NOWPAYMENTS_API_KEY = config('NOWPAYMENTS_API_KEY', default='dummy-key')
 NOWPAYMENTS_IPN_SECRET = config('NOWPAYMENTS_IPN_SECRET', default='dummy-secret')
+
+# TODO: YooKassa (раскомментировать при подключении)
+# YOOKASSA_SHOP_ID = config('YOOKASSA_SHOP_ID', default='')
+# YOOKASSA_SECRET_KEY = config('YOOKASSA_SECRET_KEY', default='')
+
 
 ROOT_URLCONF = "config.urls"
 
@@ -207,6 +239,16 @@ else:
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CART_SESSION_ID = 'cart'
+
+# H-2: Rate limiting configuration
+# In production, ratelimit uses the default Redis cache (shared across workers).
+# In development, it uses locmem which is per-process — acceptable since dev is not public.
+if DEBUG:
+    RATELIMIT_USE_CACHE = 'default'
+    # Silence E003 — locmem is expected in dev, not shared but functional
+    SILENCED_SYSTEM_CHECKS = ['django_ratelimit.E003']
+else:
+    RATELIMIT_USE_CACHE = 'default'  # Redis cache defined above
 
 if DEBUG:
     INSTALLED_APPS.append('debug_toolbar')

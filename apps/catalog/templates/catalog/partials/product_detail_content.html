@@ -1,4 +1,4 @@
-{% load cache %}
+{% load static %}
 <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
         {% if has_variants %}
@@ -9,8 +9,9 @@
     >
 
         <!-- ── Image Gallery ───────────────────── -->
-        <div class="flex flex-col gap-4">
-            <div class="bg-gray-100 overflow-hidden relative" style="aspect-ratio: 1/1;">
+        <div class="flex flex-col gap-4" x-data="{ lightboxOpen: false }">
+            <div class="bg-gray-100 overflow-hidden relative group cursor-zoom-in" style="aspect-ratio: 1/1;"
+                 @click="lightboxOpen = true">
                 <template x-if="activeImages.length > 0">
                     <img :src="activeImages[activeIndex].url"
                          :alt="activeImages[activeIndex].alt"
@@ -19,30 +20,69 @@
                 <template x-if="activeImages.length === 0">
                     <div class="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
                 </template>
-            </div>
-            <!-- Thumbnails -->
-            <div class="flex flex-wrap gap-2" x-show="activeImages.length > 1">
-                <template x-for="(img, i) in activeImages" :key="i">
-                    <button type="button"
-                        @click="activeIndex = i"
-                        :class="activeIndex === i ? 'border-black' : 'border-gray-200'"
-                        class="w-16 h-16 border-2 overflow-hidden flex-shrink-0 transition">
-                        <img :src="img.url" :alt="img.alt" class="w-full h-full object-cover">
-                    </button>
+
+                <!-- Arrows (only if more than 1 image) -->
+                <template x-if="activeImages.length > 1">
+                    <div>
+                        <!-- Left arrow -->
+                        <button type="button"
+                            @click.stop="activeIndex = (activeIndex - 1 + activeImages.length) % activeImages.length"
+                            class="absolute left-3 top-1/2 -translate-y-1/2
+                                   opacity-0 group-hover:opacity-100
+                                   transition-opacity duration-200
+                                   focus:outline-none">
+                            <svg class="w-8 h-8 text-gray-800/50 hover:text-gray-800/80 transition-colors" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <!-- Right arrow -->
+                        <button type="button"
+                            @click.stop="activeIndex = (activeIndex + 1) % activeImages.length"
+                            class="absolute right-3 top-1/2 -translate-y-1/2
+                                   opacity-0 group-hover:opacity-100
+                                   transition-opacity duration-200
+                                   focus:outline-none">
+                            <svg class="w-8 h-8 text-gray-800/50 hover:text-gray-800/80 transition-colors" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
                 </template>
             </div>
+
+            <!-- ── Lightbox ──────────────────────────── -->
+            <template x-teleport="body">
+                <div x-show="lightboxOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     @click="lightboxOpen = false"
+                     @keydown.escape.window="lightboxOpen = false"
+                     class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 cursor-zoom-out"
+                     style="display: none;">
+                    <template x-if="activeImages.length > 0">
+                        <img :src="activeImages[activeIndex].url"
+                             :alt="activeImages[activeIndex].alt"
+                             class="max-w-[90vw] max-h-[90vh] object-contain select-none">
+                    </template>
+                </div>
+            </template>
         </div>
+
+
 
         <!-- ── Details & Form ──────────────────────── -->
         <div class="flex flex-col">
-            {% cache 600 product_info product.id %}
             <h1 class="text-3xl font-medium uppercase tracking-wide mb-4">{{ product.name }}</h1>
 
             <!-- Price (updated by Alpine.js) -->
             <p class="text-xl font-semibold mb-6" x-text="activePrice + ' ₽'"></p>
 
             <div class="prose prose-sm text-gray-600 mb-8">
-                {{ product.description|linebreaks }}
+                {{ product.description|linebreaksbr }}
             </div>
 
             <!-- Specifications -->
@@ -60,7 +100,6 @@
                 </div>
                 {% endif %}
             </div>
-            {% endcache %}
 
             <form class="space-y-6"
                   hx-post="{% url 'cart:cart_add' product.id %}"
@@ -113,12 +152,19 @@
 
                 <input type="hidden" name="quantity" value="1">
 
+                {% if product.sold_out %}
+                <button type="button" disabled
+                    class="w-full bg-gray-200 text-gray-500 py-4 uppercase tracking-widest font-medium cursor-not-allowed select-none">
+                    Sold Out
+                </button>
+                {% else %}
                 <button type="submit"
                     class="w-full bg-black text-white py-4 uppercase tracking-wider font-medium
                            hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     :disabled="activeSizes.length > 0 && !selectedSizeId">
                     Add to Cart
                 </button>
+                {% endif %}
             </form>
 
             <div class="mt-8 pt-6 border-t border-gray-100">
@@ -132,53 +178,3 @@
         </div>
     </div>
 </div>
-
-<script>
-// ── Mode: color variants ─────────────────────────────────────────
-function productGallery(variants, defaultPrice) {
-    return {
-        variants,
-        defaultPrice,
-        selectedVariantIndex: variants.length > 0 ? 0 : null,
-        selectedSizeId: '',
-        activeIndex: 0,
-
-        get selectedVariant() {
-            return this.selectedVariantIndex !== null ? this.variants[this.selectedVariantIndex] : null;
-        },
-        get activeImages() {
-            return this.selectedVariant ? this.selectedVariant.images : [];
-        },
-        get activeSizes() {
-            return this.selectedVariant ? this.selectedVariant.sizes : [];
-        },
-        get activePrice() {
-            return this.selectedVariant ? this.selectedVariant.price : this.defaultPrice;
-        },
-
-        selectVariant(index) {
-            this.selectedVariantIndex = index;
-            this.activeIndex = 0;
-            this.selectedSizeId = '';
-        },
-
-        init() {
-            // Auto-select first variant
-            if (this.variants.length > 0) {
-                this.selectVariant(0);
-            }
-        }
-    }
-}
-
-// ── Mode: simple product (no variants) ──────────────────────────────────
-function productGallerySimple(images, sizes, defaultPrice) {
-    return {
-        activeImages: images,
-        activeSizes: sizes,
-        activePrice: defaultPrice,
-        selectedSizeId: sizes.length === 0 ? 'default' : '',
-        activeIndex: 0,
-    }
-}
-</script>

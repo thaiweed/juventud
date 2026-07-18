@@ -1,5 +1,7 @@
 from django.views.generic import ListView, DetailView
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from .models import Product, Category
 import json
 
@@ -31,6 +33,7 @@ class ProductListView(ListView):
         return super().get_template_names()
 
 
+@method_decorator(never_cache, name='dispatch')
 class ProductDetailView(DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'

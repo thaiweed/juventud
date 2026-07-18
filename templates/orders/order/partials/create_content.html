@@ -24,11 +24,18 @@
         <!-- Order Summary -->
         <div class="bg-gray-50 p-6 rounded-lg order-2 md:order-1">
             <h2 class="text-xl font-bold mb-4 uppercase tracking-wider">Your Order</h2>
-            <div class="space-y-4">
+            <div id="checkout-order-summary" class="space-y-4">
                 {% for item in cart %}
                 <div class="flex justify-between items-start border-b border-gray-200 pb-4">
                     <div>
                         <h3 class="font-medium">{{ item.product.name }}</h3>
+                        {% if item.color_name or item.size_name %}
+                        <p class="text-xs text-gray-400 uppercase mt-0.5">
+                            {% if item.color_name %}{{ item.color_name }}{% endif %}
+                            {% if item.color_name and item.size_name %} / {% endif %}
+                            {% if item.size_name %}{{ item.size_name }}{% endif %}
+                        </p>
+                        {% endif %}
                         <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
                     </div>
                     <span class="font-medium">{{ item.total_price }} ₽</span>
