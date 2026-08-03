@@ -73,7 +73,7 @@
         {% endfor %}
     </div>
 
-    <div class="mt-6 pt-6 border-t border-gray-200">
+    <div class="mt-6">
         <div class="flex justify-between text-lg font-medium mb-6">
             <span>Subtotal</span>
             <span>{{ cart.get_total_price }} ₽</span>
@@ -122,8 +122,12 @@
         <span class="font-medium">{{ item.total_price }} ₽</span>
     </div>
     {% endfor %}
-    <div class="flex justify-between items-center pt-4 font-bold text-lg">
+    <div class="flex justify-between items-center pt-2">
+        <span class="text-gray-500 text-sm">Shipping</span>
+        <span class="text-gray-700">400 ₽</span>
+    </div>
+    <div class="flex justify-between items-center pt-3 border-t border-black font-bold text-lg">
         <span>Total</span>
-        <span>{{ cart.get_total_price }} ₽</span>
+        <span>{{ cart.get_total_price_with_shipping }} ₽</span>
     </div>
 </div>
