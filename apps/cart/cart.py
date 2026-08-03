@@ -164,6 +164,10 @@ class Cart:
         """Calculate total using current DB prices via __iter__."""
         return sum(item['total_price'] for item in self)
 
+    def get_total_price_with_shipping(self):
+        """Total including fixed shipping cost."""
+        return self.get_total_price() + settings.SHIPPING_COST
+
     def clear(self):
         del self.session[settings.CART_SESSION_ID]
         self.save()

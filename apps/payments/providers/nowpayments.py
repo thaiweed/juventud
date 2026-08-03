@@ -61,7 +61,7 @@ class NowPaymentsProvider(PaymentProvider):
         Возвращает нормализованный словарь с external_id и redirect_url.
         """
         raw = self._create_invoice(
-            price_amount=order.get_total_cost(),
+            price_amount=order.get_total_with_shipping(),
             price_currency='rub',
             order_description='Juventud Clothing',
             ipn_callback_url=urls.get('ipn', ''),

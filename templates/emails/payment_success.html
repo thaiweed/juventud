@@ -67,9 +67,13 @@
             <td>{{ item.price }} ₽</td>
           </tr>
           {% endfor %}
+          <tr>
+            <td colspan="3" style="padding:10px 14px; font-size:14px; color:#555;">Shipping</td>
+            <td style="padding:10px 14px; font-size:14px; color:#555;">400 ₽</td>
+          </tr>
           <tr class="total-row">
-            <td colspan="3">Total</td>
-            <td>{{ order.get_total_cost }} ₽</td>
+            <td colspan="3" style="padding:10px 14px; font-weight:700; font-size:15px; color:#111; border-top:2px solid #111;">Total</td>
+            <td style="padding:10px 14px; font-weight:700; font-size:15px; color:#111; border-top:2px solid #111;">{{ order.get_total_with_shipping }} ₽</td>
           </tr>
         </tbody>
       </table>

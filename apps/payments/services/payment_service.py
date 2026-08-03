@@ -83,7 +83,7 @@ class PaymentService:
         вместо создания нового (поддержка повторных попыток оплаты).
         """
         external_id = payment_data['external_id']
-        amount = order.get_total_cost()
+        amount = order.get_total_with_shipping()
 
         # Ищем существующий незавершённый платёж для этого заказа
         existing = Payment.objects.filter(

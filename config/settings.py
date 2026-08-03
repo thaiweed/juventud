@@ -240,6 +240,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CART_SESSION_ID = 'cart'
 
+# Fixed shipping cost in RUB (always applied to every order)
+SHIPPING_COST = 400
+
 # H-2: Rate limiting configuration
 # In production, ratelimit uses the default Redis cache (shared across workers).
 # In development, it uses locmem which is per-process — acceptable since dev is not public.

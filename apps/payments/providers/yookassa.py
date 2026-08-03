@@ -51,7 +51,7 @@ class YooKassaProvider(PaymentProvider):
         Пример:
             from yookassa import Payment as YKPayment
             payment = YKPayment.create({
-                "amount": {"value": str(order.get_total_cost()), "currency": "RUB"},
+                "amount": {"value": str(order.get_total_with_shipping()), "currency": "RUB"},
                 "confirmation": {"type": "redirect", "return_url": urls['success']},
                 "capture": True,
                 "description": f"Order #{order.id}",
