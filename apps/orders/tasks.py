@@ -1,39 +1,118 @@
-from celery import shared_task
-from django.core.mail import send_mail
-from .models import Order
-from apps.payments.models import Payment
+import logging
+from datetime import datetime
 
+from celery import shared_task
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+from .models import Order
+
+logger = logging.getLogger(__name__)
+
 
 @shared_task
 def send_order_created_email(order_id):
     """
-    Task to send an e-mail notification when an order is successfully created.
+    Sends an HTML confirmation email when an order is placed.
+    Falls back to plain text if template rendering fails.
     """
     try:
-        order = Order.objects.get(id=order_id)
-        subject = f'Order nr. {order.id}'
-        message = f'Dear {order.first_name},\n\nYou have successfully placed an order.\nYour order ID is {order.id}.\n\nPlease proceed to payment to complete your purchase.'
-        mail_sent = send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [order.email])
-        return mail_sent
+        order = Order.objects.prefetch_related('items__product').get(id=order_id)
     except Order.DoesNotExist:
+        logger.warning("send_order_created_email: Order #%s not found", order_id)
         return False
+
+    subject = f'Order #{order.id} — Juventud'
+
+    try:
+        # Build absolute payment URL
+        payment_url = f'https://juventudonline.store/payments/process/'
+
+        context = {
+            'order': order,
+            'payment_url': payment_url,
+            'year': datetime.now().year,
+        }
+        html_body = render_to_string('emails/order_created.html', context)
+        text_body = strip_tags(html_body)
+    except Exception as e:
+        logger.error("Failed to render order_created email template: %s", e)
+        # Fallback plain text
+        text_body = (
+            f"Hi {order.first_name},\n\n"
+            f"Your order #{order.id} has been placed successfully.\n"
+            f"Please complete your payment at https://juventudonline.store/payments/process/\n\n"
+            f"Thank you!"
+        )
+        html_body = None
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[order.email],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+        msg.send()
+        logger.info("Order created email sent to %s (order #%s)", order.email, order.id)
+        return True
+    except Exception as e:
+        logger.error("Failed to send order_created email for order #%s: %s", order_id, e)
+        return False
+
 
 @shared_task
 def send_payment_success_email(order_id):
     """
-    Task to send an e-mail notification when payment is successful.
+    Sends an HTML payment confirmation email after successful payment.
     """
     try:
-        order = Order.objects.get(id=order_id)
-        # Try to get payment info if available
-        payment = Payment.objects.filter(order=order, payment_status='finished').first()
-        trans_id = payment.transaction_id if payment else 'N/A'
-        
-        subject = f'Payment Confirmed - Order nr. {order.id}'
-        message = f'Dear {order.first_name},\n\nYour payment for Order {order.id} has been successfully received.\nTransaction ID: {trans_id}\n\nThank you for shopping with us!'
-        
-        mail_sent = send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [order.email])
-        return mail_sent
+        order = Order.objects.prefetch_related('items__product').get(id=order_id)
     except Order.DoesNotExist:
+        logger.warning("send_payment_success_email: Order #%s not found", order_id)
+        return False
+
+    subject = f'Payment Confirmed — Order #{order.id}'
+
+    # Get transaction id from the latest paid payment
+    from apps.payments.models import Payment
+    payment = Payment.objects.filter(order=order, status='paid').first()
+    trans_id = payment.external_id if payment else None
+
+    try:
+        context = {
+            'order': order,
+            'trans_id': trans_id,
+            'year': datetime.now().year,
+        }
+        html_body = render_to_string('emails/payment_success.html', context)
+        text_body = strip_tags(html_body)
+    except Exception as e:
+        logger.error("Failed to render payment_success email template: %s", e)
+        text_body = (
+            f"Hi {order.first_name},\n\n"
+            f"Your payment for order #{order.id} has been confirmed.\n"
+            f"Transaction ID: {trans_id or 'N/A'}\n\n"
+            f"Thank you for shopping with Juventud!"
+        )
+        html_body = None
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[order.email],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+        msg.send()
+        logger.info("Payment success email sent to %s (order #%s)", order.email, order.id)
+        return True
+    except Exception as e:
+        logger.error("Failed to send payment_success email for order #%s: %s", order_id, e)
         return False
