@@ -113,6 +113,7 @@ services:
       - ./media:/app/media
     networks:
       - juventud_net
+      - nginx_net
     depends_on:
       db:
         condition: service_healthy
