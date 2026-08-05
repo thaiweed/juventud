@@ -19,6 +19,13 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ))
     paid = models.BooleanField(default=False)
+    cdek_tracking_number = models.CharField(
+        max_length=100, 
+        blank=True, 
+        default='',
+        verbose_name='CDEK Tracking Number',
+        help_text='If set and status changes to Shipped, an email will be sent to the customer.'
+    )
 
     # C-2: session ownership — used to verify the requester owns this order
     # Prevents IDOR: attacker cannot pay for someone else's order by guessing order_id
@@ -44,6 +51,23 @@ class Order(models.Model):
         indexes = [
             models.Index(fields=['-created']),
         ]
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            try:
+                old_order = Order.objects.get(pk=self.pk)
+                old_status = old_order.status
+            except Order.DoesNotExist:
+                pass
+        
+        super().save(*args, **kwargs)
+
+        if not is_new and old_status:
+            if self.status == 'shipped' and old_status != 'shipped' and self.cdek_tracking_number:
+                from apps.orders.tasks import send_shipped_email
+                send_shipped_email.delay(self.id)
 
     def __str__(self):
         return f'Order {self.id}'

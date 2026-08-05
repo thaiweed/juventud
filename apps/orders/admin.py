@@ -11,9 +11,9 @@ class OrderItemInline(admin.TabularInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'first_name', 'last_name', 'email',
-                    'address', 'postal_code', 'city', 'country', 'paid',
-                    'status', 'created', 'updated', 'transaction_id', 'delete_button']
-    list_filter = ['paid', 'created', 'updated', 'status']
+                    'city', 'paid', 'status', 'cdek_tracking_number', 'created', 'delete_button']
+    list_editable = ['status', 'cdek_tracking_number']
+    list_filter = ['paid', 'created', 'status']
     readonly_fields = ['transaction_id']
     inlines = [OrderItemInline]
 

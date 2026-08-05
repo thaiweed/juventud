@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Shipped</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #111827; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb; }
+        .container { background-color: #ffffff; padding: 40px; border: 1px solid #e5e7eb; border-radius: 4px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .logo { font-size: 24px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #000; text-decoration: none; }
+        h1 { font-size: 20px; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .message { margin-bottom: 30px; color: #4b5563; }
+        .tracking-box { background-color: #f3f4f6; padding: 20px; margin-bottom: 30px; border-left: 4px solid #000; }
+        .tracking-label { font-size: 12px; text-transform: uppercase; color: #6b7280; font-weight: 600; letter-spacing: 1px; margin-bottom: 5px; }
+        .tracking-number { font-size: 24px; font-weight: 700; color: #000; letter-spacing: 2px; margin-bottom: 15px; }
+        .btn { display: inline-block; background-color: #000; color: #ffffff !important; text-decoration: none; padding: 12px 24px; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-radius: 2px; }
+        .order-details { margin-bottom: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="https://juventudonline.store" class="logo">Juventud</a>
+        </div>
+        
+        <h1>Great news, {{ order.first_name }}!</h1>
+        
+        <div class="message">
+            Your order <strong>#{{ order.id }}</strong> has been shipped and is now on its way to you via CDEK.
+        </div>
+        
+        {% if order.cdek_tracking_number %}
+        <div class="tracking-box">
+            <div class="tracking-label">CDEK Tracking Number</div>
+            <div class="tracking-number">{{ order.cdek_tracking_number }}</div>
+            
+            {% if tracking_link %}
+            <a href="{{ tracking_link }}" class="btn">Track Package</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="order-details">
+            <p><strong>Shipping Address:</strong><br>
+            {{ order.first_name }} {{ order.last_name }}<br>
+            {{ order.address }}<br>
+            {{ order.city }}, {{ order.postal_code }}<br>
+            {{ order.country }}</p>
+        </div>
+        
+        <div class="footer">
+            <p>If you have any questions, please contact us by replying to this email.</p>
+            <p>&copy; {{ year }} Juventud. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

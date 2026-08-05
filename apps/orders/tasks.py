@@ -116,3 +116,57 @@ def send_payment_success_email(order_id):
     except Exception as e:
         logger.error("Failed to send payment_success email for order #%s: %s", order_id, e)
         return False
+
+
+@shared_task
+def send_shipped_email(order_id):
+    """
+    Sends an HTML email when the order is marked as shipped.
+    """
+    try:
+        order = Order.objects.prefetch_related('items__product').get(id=order_id)
+    except Order.DoesNotExist:
+        logger.warning("send_shipped_email: Order #%s not found", order_id)
+        return False
+
+    subject = f'Your Order #{order.id} is Shipped! — Juventud'
+
+    # Build CDEK tracking link
+    tracking_link = ''
+    if order.cdek_tracking_number:
+        tracking_link = f"https://www.cdek.ru/ru/tracking/?order_id={order.cdek_tracking_number}"
+
+    try:
+        context = {
+            'order': order,
+            'tracking_link': tracking_link,
+            'year': datetime.now().year,
+        }
+        html_body = render_to_string('emails/order_shipped.html', context)
+        text_body = strip_tags(html_body)
+    except Exception as e:
+        logger.error("Failed to render order_shipped email template: %s", e)
+        text_body = (
+            f"Hi {order.first_name},\n\n"
+            f"Great news! Your order #{order.id} has been shipped.\n"
+            f"CDEK Tracking Number: {order.cdek_tracking_number}\n"
+            f"Track it here: {tracking_link}\n\n"
+            f"Thank you for shopping with Juventud!"
+        )
+        html_body = None
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[order.email],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+        msg.send()
+        logger.info("Order shipped email sent to %s (order #%s)", order.email, order.id)
+        return True
+    except Exception as e:
+        logger.error("Failed to send order_shipped email for order #%s: %s", order_id, e)
+        return False
