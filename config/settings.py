@@ -104,9 +104,9 @@ PAYMENT_PROVIDER = config('PAYMENT_PROVIDER', default='nowpayments')
 NOWPAYMENTS_API_KEY = config('NOWPAYMENTS_API_KEY', default='dummy-key')
 NOWPAYMENTS_IPN_SECRET = config('NOWPAYMENTS_IPN_SECRET', default='dummy-secret')
 
-# TODO: YooKassa (раскомментировать при подключении)
-# YOOKASSA_SHOP_ID = config('YOOKASSA_SHOP_ID', default='')
-# YOOKASSA_SECRET_KEY = config('YOOKASSA_SECRET_KEY', default='')
+# YooKassa
+YOOKASSA_SHOP_ID = config('YOOKASSA_SHOP_ID', default='')
+YOOKASSA_SECRET_KEY = config('YOOKASSA_SECRET_KEY', default='')
 
 
 ROOT_URLCONF = "config.urls"
