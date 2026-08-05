@@ -22,7 +22,7 @@ DATE=$(date +%Y-%m-%d_%H-%M)
 ARCHIVE_NAME="juventud_backup_${DATE}.tar.gz"
 
 echo "Упаковываем файлы в архив $ARCHIVE_NAME..."
-tar -czf "$ARCHIVE_NAME" db_backup.sql media/ .env
+tar -czf "$ARCHIVE_NAME" db_backup.sql .env
 
 # 3. Отправляем в Telegram
 echo "Отправляем архив в Telegram..."
