@@ -136,6 +136,37 @@ def payment_ipn(request):
 
 
 def payment_success(request):
+    """
+    Страница успешной оплаты.
+    Поскольку ЮKassa использует единый return_url и при успехе, и при отмене,
+    нам нужно проверить реальный статус заказа.
+    """
+    order_id = request.session.get('order_id')
+    if order_id:
+        try:
+            order = Order.objects.get(id=order_id, session_key=request.session.session_key)
+            if not order.paid:
+                # Пытаемся синхронизировать статус, если вебхук еще не дошел
+                provider = get_payment_provider()
+                if provider.__class__.__name__ == 'YooKassaProvider':
+                    payment = order.payments.last()
+                    if payment and payment.external_id:
+                        try:
+                            actual_data = provider.get_payment(payment.external_id)
+                            if actual_data.get('status') == 'succeeded':
+                                order.paid = True
+                                order.save(update_fields=['paid'])
+                            elif actual_data.get('status') == 'canceled':
+                                return render(request, 'payments/cancel.html', {'order': order})
+                        except Exception as e:
+                            logger.error("Failed to sync payment status on return_url: %s", e)
+                
+                if not order.paid:
+                    # Если всё ещё не оплачен, скорее всего клиент отменил оплату
+                    return render(request, 'payments/cancel.html', {'order': order})
+        except Order.DoesNotExist:
+            pass
+
     return render(request, 'payments/success.html')
 
 
