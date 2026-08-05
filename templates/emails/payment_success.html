@@ -11,8 +11,7 @@
     .header h1 { color: #fff; margin: 0; font-size: 22px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; }
     .header p { color: #aaa; margin: 6px 0 0; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
     .success-badge { text-align: center; padding: 32px 40px 8px; }
-    .success-badge .icon { display: inline-block; width: 64px; height: 64px; background: #111; border-radius: 50%; line-height: 64px; font-size: 30px; color: #fff; }
-    .success-badge h2 { margin: 16px 0 0; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .success-badge h2 { margin: 0; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
     .body { padding: 24px 40px 40px; }
     .greeting { font-size: 15px; margin-bottom: 24px; color: #333; text-align: center; }
     .info-block { background: #f9f9f9; border-left: 3px solid #111; padding: 16px 20px; margin-bottom: 24px; }
@@ -36,8 +35,7 @@
       <p>Payment Confirmed</p>
     </div>
     <div class="success-badge">
-      <div class="icon">✓</div>
-      <h2>Your payment was received!</h2>
+      <h2>✓ Your payment was received</h2>
     </div>
     <div class="body">
       <p class="greeting">Hi {{ order.first_name }}, your order has been paid and is now being processed. We'll notify you when it ships.</p>
