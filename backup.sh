@@ -19,28 +19,27 @@ docker compose exec -T db sh -c 'pg_dump -U $POSTGRES_USER -d $POSTGRES_DB -c' >
 
 # 2. Упаковываем файлы в архив
 DATE=$(date +%Y-%m-%d_%H-%M)
-ARCHIVE_NAME="juventud_backup_${DATE}.zip"
+ARCHIVE_NAME="juventud_backup_${DATE}.tar.gz"
 
 echo "Упаковываем файлы в архив $ARCHIVE_NAME..."
-# zip -q прячет длинный список файлов, чтобы логи были чистыми
-zip -r -q "$ARCHIVE_NAME" db_backup.sql media/ .env
+tar -czf "$ARCHIVE_NAME" db_backup.sql media/ .env
 
 # 3. Отправляем в Telegram
 echo "Отправляем архив в Telegram..."
 
 if [ -z "$TOPIC_ID" ]; then
     # Отправка в обычную группу
-    curl -s -F chat_id="${CHAT_ID}" \
+    curl -F chat_id="${CHAT_ID}" \
          -F document=@"${ARCHIVE_NAME}" \
          -F caption="📦 Backup ${DATE}" \
-         "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" > /dev/null
+         "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument"
 else
     # Отправка в конкретный топик супергруппы
-    curl -s -F chat_id="${CHAT_ID}" \
+    curl -F chat_id="${CHAT_ID}" \
          -F message_thread_id="${TOPIC_ID}" \
          -F document=@"${ARCHIVE_NAME}" \
          -F caption="📦 Backup ${DATE}" \
-         "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" > /dev/null
+         "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument"
 fi
 
 # 4. Убираем за собой (удаляем архив и дамп с сервера)
