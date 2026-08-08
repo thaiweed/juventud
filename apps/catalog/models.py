@@ -35,8 +35,17 @@ class Product(models.Model):
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    available = models.BooleanField(default=True)
-    sold_out = models.BooleanField(default=False, verbose_name='Sold Out')
+    STATUS_CHOICES = (
+        ('available', 'В наличии'),
+        ('sold_out', 'Распродано (Sold Out)'),
+        ('hidden', 'Скрыто (Не отображать на сайте)'),
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='available', 
+        verbose_name='Статус'
+    )
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

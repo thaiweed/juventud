@@ -53,9 +53,9 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['name', 'order', 'price', 'category', 'available', 'sold_out', 'has_multiple_colors', 'created_at']
-    list_filter = ['available', 'sold_out', 'has_multiple_colors', 'created_at', 'category']
-    list_editable = ['order', 'price', 'available', 'sold_out']
+    list_display = ['name', 'order', 'price', 'category', 'status', 'has_multiple_colors', 'created_at']
+    list_filter = ['status', 'has_multiple_colors', 'created_at', 'category']
+    list_editable = ['order', 'price', 'status']
     ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
     filter_horizontal = ['sizes', 'colors']
@@ -63,7 +63,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
         (None, {
             'fields': (
                 'category', 'name', 'slug', 'description',
-                'price', 'available', 'sold_out', 'order', 'material', 'density',
+                'price', 'status', 'order', 'material', 'density',
                 'sizes', 'colors',
             )
         }),

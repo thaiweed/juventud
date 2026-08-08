@@ -13,7 +13,7 @@ class ProductListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(available=True).select_related('category').prefetch_related('images')
+        queryset = super().get_queryset().exclude(status='hidden').select_related('category').prefetch_related('images')
         category_slug = self.kwargs.get('slug')
         if category_slug:
             category = get_object_or_404(Category, slug=category_slug)
@@ -42,7 +42,7 @@ class ProductDetailView(DetailView):
     def get_queryset(self):
         return (
             super().get_queryset()
-            .filter(available=True)
+            .exclude(status='hidden')
             .select_related('category')
             .prefetch_related(
                 'images',

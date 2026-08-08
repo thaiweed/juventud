@@ -152,7 +152,7 @@
 
                 <input type="hidden" name="quantity" value="1">
 
-                {% if product.sold_out %}
+                {% if product.status == 'sold_out' %}
                 <button type="button" disabled
                     class="w-full bg-gray-200 text-gray-500 py-4 uppercase tracking-widest font-medium cursor-not-allowed select-none">
                     Sold Out
