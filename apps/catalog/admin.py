@@ -55,9 +55,9 @@ from django.utils.html import format_html
 
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['image_preview', 'name', 'order', 'price', 'category', 'status', 'has_multiple_colors', 'created_at']
+    list_display = ['image_preview', 'name', 'order', 'price', 'category', 'status', 'created_at']
     list_display_links = ['image_preview', 'name']
-    list_filter = ['status', 'has_multiple_colors', 'created_at', 'category']
+    list_filter = ['status', 'created_at', 'category']
     list_editable = ['order', 'price', 'status']
     ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
@@ -79,13 +79,6 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
                 'price', 'status', 'order', 'material', 'density',
                 'sizes', 'colors',
             )
-        }),
-        ('Цветовые варианты', {
-            'fields': ('has_multiple_colors',),
-            'description': (
-                'Включите, если товар имеет несколько цветовых вариантов. '
-                'После сохранения появятся поля для добавления вариантов ниже.'
-            ),
         }),
     )
     inlines = [ProductImageInline, ProductVariantInline]

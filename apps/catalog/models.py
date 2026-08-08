@@ -52,7 +52,6 @@ class Product(models.Model):
     
     sizes = models.ManyToManyField(Size, blank=True)
     colors = models.ManyToManyField(Color, blank=True)
-    has_multiple_colors = models.BooleanField(default=False, verbose_name='Несколько цветов')
 
     material = models.CharField(max_length=100, blank=True, null=True)
     density = models.CharField(max_length=50, blank=True, null=True) # e.g. 300 g/m2

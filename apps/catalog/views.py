@@ -57,7 +57,7 @@ class ProductDetailView(DetailView):
         product = self.object
 
         variants = list(product.variants.all())
-        has_variants = product.has_multiple_colors and len(variants) > 0
+        has_variants = len(variants) > 0
 
         # ── Данные для Alpine.js ──────────────────────────
         if has_variants:
