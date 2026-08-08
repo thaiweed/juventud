@@ -51,14 +51,27 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
+from django.utils.html import format_html
+
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['name', 'order', 'price', 'category', 'status', 'has_multiple_colors', 'created_at']
+    list_display = ['image_preview', 'name', 'order', 'price', 'category', 'status', 'has_multiple_colors', 'created_at']
+    list_display_links = ['image_preview', 'name']
     list_filter = ['status', 'has_multiple_colors', 'created_at', 'category']
     list_editable = ['order', 'price', 'status']
     ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
     filter_horizontal = ['sizes', 'colors']
+
+    def image_preview(self, obj):
+        image = obj.images.first()
+        if image and image.image:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />',
+                image.image.url
+            )
+        return format_html('<div style="width: 50px; height: 50px; background-color: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 10px;">Нет фото</div>')
+    image_preview.short_description = 'Фото'
     fieldsets = (
         (None, {
             'fields': (
