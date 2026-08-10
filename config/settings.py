@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "nested_admin",
+    "adminsortable2",
     "django_ratelimit",
     "apps.catalog",
     "apps.cart",

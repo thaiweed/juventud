@@ -1,5 +1,6 @@
 from django.contrib import admin
 import nested_admin
+from adminsortable2.admin import SortableAdminMixin
 
 from .models import (
     Category, Product, Size, Color,
@@ -45,9 +46,8 @@ class ProductVariantInline(nested_admin.NestedStackedInline):
 # ──────────────────────────────────────────────
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'order']
-    list_editable = ['order']
+class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ['name', 'slug']
     ordering = ['order', 'name']
     prepopulated_fields = {'slug': ('name',)}
 
@@ -55,11 +55,11 @@ class CategoryAdmin(admin.ModelAdmin):
 from django.utils.html import format_html
 
 @admin.register(Product)
-class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['image_preview', 'name', 'order', 'get_categories', 'status', 'created_at']
+class ProductAdmin(SortableAdminMixin, nested_admin.NestedModelAdmin):
+    list_display = ['image_preview', 'name', 'get_categories', 'status', 'created_at']
     list_display_links = ['image_preview', 'name']
     list_filter = ['status', 'created_at', 'categories']
-    list_editable = ['order', 'status']
+    list_editable = ['status']
     ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
     filter_horizontal = ['categories']
@@ -95,9 +95,8 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
 
 
 @admin.register(Size)
-class SizeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'order']
-    list_editable = ['order']
+class SizeAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ['name']
     ordering = ['order', 'id']
 
 
