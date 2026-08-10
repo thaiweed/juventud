@@ -22,6 +22,7 @@ class VariantImageInline(nested_admin.NestedTabularInline):
     model = VariantImage
     extra = 1
     fields = ['image', 'alt_text', 'order']
+    sortable_field_name = "order"
 
 
 class VariantSizeInline(nested_admin.NestedTabularInline):
@@ -36,6 +37,7 @@ class ProductVariantInline(nested_admin.NestedStackedInline):
     fields = ['color', 'preview_image', 'name', 'description', 'price', 'order']
     inlines = [VariantImageInline, VariantSizeInline]
     show_change_link = False
+    sortable_field_name = "order"
 
 
 # ──────────────────────────────────────────────
