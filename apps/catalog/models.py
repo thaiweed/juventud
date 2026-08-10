@@ -30,7 +30,7 @@ class Color(models.Model):
         return self.name
 
 class Product(models.Model):
-    category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE)
+    categories = models.ManyToManyField(Category, related_name='products', blank=True, verbose_name='Категории')
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     description = models.TextField()

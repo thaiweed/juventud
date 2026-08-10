@@ -13,11 +13,11 @@ class ProductListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        queryset = super().get_queryset().exclude(status='hidden').select_related('category').prefetch_related('images')
+        queryset = super().get_queryset().exclude(status='hidden').prefetch_related('categories', 'images')
         category_slug = self.kwargs.get('slug')
         if category_slug:
             category = get_object_or_404(Category, slug=category_slug)
-            queryset = queryset.filter(category=category)
+            queryset = queryset.filter(categories=category)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -43,8 +43,8 @@ class ProductDetailView(DetailView):
         return (
             super().get_queryset()
             .exclude(status='hidden')
-            .select_related('category')
             .prefetch_related(
+                'categories',
                 'images',
                 'sizes',
                 'variants__images',

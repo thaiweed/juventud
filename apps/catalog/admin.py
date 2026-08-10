@@ -55,13 +55,17 @@ from django.utils.html import format_html
 
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['image_preview', 'name', 'order', 'price', 'category', 'status', 'created_at']
+    list_display = ['image_preview', 'name', 'order', 'price', 'get_categories', 'status', 'created_at']
     list_display_links = ['image_preview', 'name']
-    list_filter = ['status', 'created_at', 'category']
+    list_filter = ['status', 'created_at', 'categories']
     list_editable = ['order', 'price', 'status']
     ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
-    filter_horizontal = ['sizes', 'colors']
+    filter_horizontal = ['sizes', 'colors', 'categories']
+
+    def get_categories(self, obj):
+        return ", ".join([c.name for c in obj.categories.all()])
+    get_categories.short_description = 'Категории'
 
     def image_preview(self, obj):
         image = obj.images.first()
@@ -75,7 +79,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'category', 'name', 'slug', 'description',
+                'categories', 'name', 'slug', 'description',
                 'price', 'status', 'order', 'material', 'density',
                 'sizes', 'colors',
             )
