@@ -104,7 +104,7 @@ class ProductVariant(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
     class Meta:
-        ordering = ['order']
+        ordering = ['order', 'id']
         verbose_name = 'Цветовой вариант'
         verbose_name_plural = 'Цветовые варианты'
 
@@ -127,7 +127,7 @@ class VariantImage(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
     class Meta:
-        ordering = ['order']
+        ordering = ['order', 'id']
         verbose_name = 'Фото варианта'
         verbose_name_plural = 'Фото варианта'
 

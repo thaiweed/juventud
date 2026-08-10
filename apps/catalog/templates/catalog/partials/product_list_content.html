@@ -2,7 +2,7 @@
 {% cache 600 product_list current_category.slug|default:"all" page_obj.number|default:"1" %}
 <div id="product-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
     {% for product in products %}
-    {% with default_variant=product.variants.first %}
+    {% with default_variant=product.variants.all.0 %}
     <article class="card group cursor-pointer" hx-get="{% url 'catalog:product_detail' product.slug %}"
         hx-target="#main-content" hx-push-url="true" hx-swap="innerHTML window:top">
 
