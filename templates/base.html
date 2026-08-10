@@ -136,10 +136,12 @@
         });
 
         // ── Alpine.js Gallery helper for color variants ──────────────────
-        function productGallery(variants, defaultPrice) {
+        function productGallery(variants, defaultPrice, defaultName, defaultDescription) {
             return {
                 variants,
                 defaultPrice,
+                defaultName,
+                defaultDescription,
                 selectedVariantIndex: variants.length > 0 ? 0 : null,
                 selectedSizeId: '',
                 activeIndex: 0,
@@ -155,6 +157,15 @@
                 },
                 get activePrice() {
                     return this.selectedVariant ? this.selectedVariant.price : this.defaultPrice;
+                },
+                get activeName() {
+                    return this.selectedVariant ? this.selectedVariant.name : this.defaultName;
+                },
+                get activeDescription() {
+                    if (this.selectedVariant && this.selectedVariant.description) {
+                        return this.selectedVariant.description.replace(/\n/g, '<br>');
+                    }
+                    return this.defaultDescription.replace(/\n/g, '<br>');
                 },
 
                 selectVariant(index) {
@@ -173,11 +184,13 @@
         }
 
         // ── Alpine.js Gallery helper for simple products (no variants) ────
-        function productGallerySimple(images, sizes, defaultPrice) {
+        function productGallerySimple(images, sizes, defaultPrice, defaultName, defaultDescription) {
             return {
                 activeImages: images,
                 activeSizes: sizes,
                 activePrice: defaultPrice,
+                activeName: defaultName,
+                activeDescription: defaultDescription ? defaultDescription.replace(/\n/g, '<br>') : '',
                 selectedSizeId: sizes.length === 0 ? 'default' : '',
                 activeIndex: 0,
             }

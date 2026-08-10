@@ -2,9 +2,9 @@
 <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
         {% if has_variants %}
-        x-data="productGallery({{ product_variants_json }}, '{{ default_price }}')"
+        x-data="productGallery({{ product_variants_json }}, '{{ default_price }}', '{{ product.name|escapejs }}', '{{ product.description|escapejs }}')"
         {% else %}
-        x-data="productGallerySimple({{ product_images_json }}, {{ product_sizes_json }}, '{{ default_price }}')"
+        x-data="productGallerySimple({{ product_images_json }}, {{ product_sizes_json }}, '{{ default_price }}', '{{ product.name|escapejs }}', '{{ product.description|escapejs }}')"
         {% endif %}
     >
 
@@ -76,13 +76,12 @@
 
         <!-- ── Details & Form ──────────────────────── -->
         <div class="flex flex-col">
-            <h1 class="text-3xl font-medium uppercase tracking-wide mb-4">{{ product.name }}</h1>
+            <h1 class="text-3xl font-medium uppercase tracking-wide mb-4" x-text="activeName"></h1>
 
             <!-- Price (updated by Alpine.js) -->
             <p class="text-xl font-semibold mb-6" x-text="activePrice + ' ₽'"></p>
 
-            <div class="prose prose-sm text-gray-600 mb-8">
-                {{ product.description|linebreaksbr }}
+            <div class="prose prose-sm text-gray-600 mb-8" x-html="activeDescription">
             </div>
 
             <!-- Specifications -->

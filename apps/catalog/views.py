@@ -65,6 +65,8 @@ class ProductDetailView(DetailView):
             for v in variants:
                 variants_data.append({
                     'id': v.id,
+                    'name': v.name_override if v.name_override else product.name,
+                    'description': v.description_override if v.description_override else product.description,
                     'preview_url': v.preview_image.url if v.preview_image else '',
                     'price': str(v.effective_price),
                     'images': [

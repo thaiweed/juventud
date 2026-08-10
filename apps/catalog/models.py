@@ -103,6 +103,16 @@ class ProductVariant(models.Model):
         verbose_name='Превью цвета',
         help_text='Маленькое изображение, используемое как кнопка выбора цвета'
     )
+    name_override = models.CharField(
+        max_length=200, null=True, blank=True,
+        verbose_name='Название (переопределить)',
+        help_text='Оставьте пустым, чтобы использовать основное название товара'
+    )
+    description_override = models.TextField(
+        null=True, blank=True,
+        verbose_name='Описание (переопределить)',
+        help_text='Оставьте пустым, чтобы использовать основное описание товара'
+    )
     price_override = models.DecimalField(
         max_digits=10, decimal_places=2,
         null=True, blank=True,
