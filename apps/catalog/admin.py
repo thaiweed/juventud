@@ -33,7 +33,7 @@ class VariantSizeInline(nested_admin.NestedTabularInline):
 class ProductVariantInline(nested_admin.NestedStackedInline):
     model = ProductVariant
     extra = 0
-    fields = ['color', 'preview_image', 'name_override', 'description_override', 'price_override', 'order']
+    fields = ['color', 'preview_image', 'name', 'description', 'price', 'order']
     inlines = [VariantImageInline, VariantSizeInline]
     show_change_link = False
 
