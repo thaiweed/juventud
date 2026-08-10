@@ -97,7 +97,9 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
 
 @admin.register(Size)
 class SizeAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['name', 'order']
+    list_editable = ['order']
+    ordering = ['order', 'id']
 
 
 @admin.register(Color)

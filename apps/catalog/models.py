@@ -20,7 +20,11 @@ class Category(models.Model):
 
 class Size(models.Model):
     name = models.CharField(max_length=20) # e.g. S, M, L, XL
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок', db_index=True)
     
+    class Meta:
+        ordering = ['order', 'id']
+        
     def __str__(self):
         return self.name
 
@@ -152,6 +156,7 @@ class VariantSize(models.Model):
     available = models.BooleanField(default=True, verbose_name='В наличии')
 
     class Meta:
+        ordering = ['size__order', 'size__id']
         unique_together = ('variant', 'size')
         verbose_name = 'Размер варианта'
         verbose_name_plural = 'Размеры варианта'
