@@ -51,6 +51,11 @@ class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
     ordering = ['order', 'name']
     prepopulated_fields = {'slug': ('name',)}
 
+    class Media:
+        css = {
+            'all': ('admin/css/sortable_custom.css',)
+        }
+
 
 from django.utils.html import format_html
 
@@ -90,7 +95,7 @@ class ProductAdmin(SortableAdminMixin, nested_admin.NestedModelAdmin):
 
     class Media:
         css = {
-            'all': ('admin/css/variants.css',)
+            'all': ('admin/css/variants.css', 'admin/css/sortable_custom.css',)
         }
 
 
@@ -98,6 +103,11 @@ class ProductAdmin(SortableAdminMixin, nested_admin.NestedModelAdmin):
 class SizeAdmin(SortableAdminMixin, admin.ModelAdmin):
     list_display = ['name']
     ordering = ['order', 'id']
+
+    class Media:
+        css = {
+            'all': ('admin/css/sortable_custom.css',)
+        }
 
 
 @admin.register(Color)

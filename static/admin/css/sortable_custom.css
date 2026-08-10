@@ -1,0 +1,21 @@
+/* Custom styling for django-admin-sortable2 drag handle */
+th.sortable, td.drag {
+    width: 30px !important;
+    max-width: 30px !important;
+    padding: 0 !important;
+    text-align: center !important;
+}
+
+.drag.handle {
+    margin: 0 auto !important;
+    width: 20px !important;
+    background-size: 14px !important;
+    background-position: center !important;
+}
+
+/* Nested Admin inline drag handlers */
+.djn-drag-handler {
+    width: 25px !important;
+    padding: 0 !important;
+    text-align: center;
+}
