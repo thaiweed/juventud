@@ -82,7 +82,7 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
         (None, {
             'fields': (
                 'categories', 'name', 'slug', 'description',
-                'price', 'status', 'order', 'material', 'density',
+                'price', 'status', 'material', 'density',
                 'sizes', 'colors',
             )
         }),
