@@ -47,7 +47,9 @@ class ProductVariantInline(nested_admin.NestedStackedInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug']
+    list_display = ['name', 'slug', 'order']
+    list_editable = ['order']
+    ordering = ['order', 'name']
     prepopulated_fields = {'slug': ('name',)}
 
 

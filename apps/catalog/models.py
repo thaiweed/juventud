@@ -4,9 +4,11 @@ from django.utils.text import slugify
 class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок', db_index=True)
     
     class Meta:
         verbose_name_plural = 'Categories'
+        ordering = ['order', 'name']
 
     def save(self, *args, **kwargs):
         if not self.slug:
