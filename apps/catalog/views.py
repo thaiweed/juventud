@@ -10,7 +10,7 @@ class ProductListView(ListView):
     model = Product
     template_name = 'catalog/product_list.html'
     context_object_name = 'products'
-    paginate_by = 12
+    paginate_by = 100
 
     def get_queryset(self):
         queryset = super().get_queryset().exclude(status='hidden').prefetch_related('categories', 'images')
