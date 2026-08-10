@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from .models import Product, Category, ProductImage
+from .models import Product, Category, ProductVariant, VariantImage
 
 
 def clear_product_list_cache():
@@ -20,6 +20,11 @@ def invalidate_on_category_change(sender, **kwargs):
     clear_product_list_cache()
 
 
-@receiver([post_save, post_delete], sender=ProductImage)
-def invalidate_on_image_change(sender, **kwargs):
+@receiver([post_save, post_delete], sender=ProductVariant)
+def invalidate_on_variant_change(sender, **kwargs):
+    clear_product_list_cache()
+
+
+@receiver([post_save, post_delete], sender=VariantImage)
+def invalidate_on_variant_image_change(sender, **kwargs):
     clear_product_list_cache()

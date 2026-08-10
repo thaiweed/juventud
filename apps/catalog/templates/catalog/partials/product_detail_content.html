@@ -1,11 +1,7 @@
 {% load static %}
 <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24"
-        {% if has_variants %}
-        x-data="productGallery({{ product_variants_json }}, '{{ default_price }}', '{{ product.name|escapejs }}', '{{ product.description|escapejs }}')"
-        {% else %}
-        x-data="productGallerySimple({{ product_images_json }}, {{ product_sizes_json }}, '{{ default_price }}', '{{ product.name|escapejs }}', '{{ product.description|escapejs }}')"
-        {% endif %}
+        x-data="productGallery({{ product_variants_json }}, '{{ default_price }}', '{{ product.name|escapejs }}', '')"
     >
 
         <!-- ── Image Gallery ───────────────────── -->
@@ -106,8 +102,8 @@
                   hx-swap="outerHTML">
                 {% csrf_token %}
 
-                <!-- ── Color selector (only if has_variants) ── -->
-                {% if has_variants %}
+                <!-- ── Color selector (only if multiple variants exist) ── -->
+                {% if has_multiple_colors %}
                 <div>
                     <h3 class="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Color</h3>
                     <div class="flex flex-wrap gap-2">

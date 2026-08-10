@@ -2,7 +2,7 @@ from django.contrib import admin
 import nested_admin
 
 from .models import (
-    Category, Product, ProductImage, Size, Color,
+    Category, Product, Size, Color,
     ProductVariant, VariantImage, VariantSize,
 )
 
@@ -11,10 +11,7 @@ from .models import (
 #  Старые инлайны (оставлены для обратной совместимости)
 # ──────────────────────────────────────────────
 
-class ProductImageInline(nested_admin.NestedTabularInline):
-    model = ProductImage
-    extra = 0
-    fields = ['image', 'alt_text']
+
 
 
 # ──────────────────────────────────────────────
@@ -57,20 +54,21 @@ from django.utils.html import format_html
 
 @admin.register(Product)
 class ProductAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['image_preview', 'name', 'order', 'price', 'get_categories', 'status', 'created_at']
+    list_display = ['image_preview', 'name', 'order', 'get_categories', 'status', 'created_at']
     list_display_links = ['image_preview', 'name']
     list_filter = ['status', 'created_at', 'categories']
-    list_editable = ['order', 'price', 'status']
+    list_editable = ['order', 'status']
     ordering = ['order', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
-    filter_horizontal = ['sizes', 'colors', 'categories']
+    filter_horizontal = ['categories']
 
     def get_categories(self, obj):
         return ", ".join([c.name for c in obj.categories.all()])
     get_categories.short_description = 'Категории'
 
     def image_preview(self, obj):
-        image = obj.images.first()
+        variant = obj.variants.first()
+        image = variant.images.first() if variant else None
         if image and image.image:
             return format_html(
                 '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />',
@@ -81,13 +79,12 @@ class ProductAdmin(nested_admin.NestedModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'categories', 'name', 'slug', 'description',
-                'price', 'status', 'material', 'density',
-                'sizes', 'colors',
+                'categories', 'name', 'slug',
+                'status', 'material', 'density',
             )
         }),
     )
-    inlines = [ProductImageInline, ProductVariantInline]
+    inlines = [ProductVariantInline]
 
     class Media:
         css = {

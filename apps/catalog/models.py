@@ -39,8 +39,6 @@ class Product(models.Model):
     categories = models.ManyToManyField(Category, related_name='products', blank=True, verbose_name='Категории')
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True, blank=True)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
     STATUS_CHOICES = (
         ('available', 'В наличии'),
         ('sold_out', 'Распродано (Sold Out)'),
@@ -55,9 +53,6 @@ class Product(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    sizes = models.ManyToManyField(Size, blank=True)
-    colors = models.ManyToManyField(Color, blank=True)
 
     material = models.CharField(max_length=100, blank=True, null=True)
     density = models.CharField(max_length=50, blank=True, null=True) # e.g. 300 g/m2
@@ -72,16 +67,6 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
-
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, related_name='images', on_delete=models.SET_NULL, null=True, blank=True)
-    image = models.ImageField(upload_to='products/%Y/%m/%d')
-    alt_text = models.CharField(max_length=255, blank=True)
-    
-    def __str__(self):
-        return f"Image for {self.product.name}"
-
 
 # ──────────────────────────────────────────────
 #  Цветовые варианты
@@ -103,21 +88,18 @@ class ProductVariant(models.Model):
         verbose_name='Превью цвета',
         help_text='Маленькое изображение, используемое как кнопка выбора цвета'
     )
-    name_override = models.CharField(
+    name = models.CharField(
         max_length=200, null=True, blank=True,
-        verbose_name='Название (переопределить)',
-        help_text='Оставьте пустым, чтобы использовать основное название товара'
+        verbose_name='Название расцветки'
     )
-    description_override = models.TextField(
+    description = models.TextField(
         null=True, blank=True,
-        verbose_name='Описание (переопределить)',
-        help_text='Оставьте пустым, чтобы использовать основное описание товара'
+        verbose_name='Описание расцветки'
     )
-    price_override = models.DecimalField(
+    price = models.DecimalField(
         max_digits=10, decimal_places=2,
         null=True, blank=True,
-        verbose_name='Цена (переопределить)',
-        help_text='Оставьте пустым, чтобы использовать основную цену товара'
+        verbose_name='Цена'
     )
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
 
@@ -128,7 +110,7 @@ class ProductVariant(models.Model):
 
     @property
     def effective_price(self):
-        return self.price_override if self.price_override is not None else self.product.price
+        return self.price if self.price is not None else getattr(self.product, 'price', 0)
 
     def __str__(self):
         return f"Вариант #{self.pk} — {self.product.name}"

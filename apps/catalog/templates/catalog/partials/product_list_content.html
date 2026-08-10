@@ -2,18 +2,19 @@
 {% cache 600 product_list current_category.slug|default:"all" page_obj.number|default:"1" %}
 <div id="product-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-8">
     {% for product in products %}
+    {% with default_variant=product.variants.first %}
     <article class="card group cursor-pointer" hx-get="{% url 'catalog:product_detail' product.slug %}"
         hx-target="#main-content" hx-push-url="true" hx-swap="innerHTML window:top">
 
         <div class="image-wrap relative overflow-hidden bg-gray-100">
-            {% if product.images.all %}
+            {% if default_variant and default_variant.images.all %}
             <!-- Front image -->
-            <img src="{{ product.images.all.0.image.url }}" alt="{{ product.name }}"
+            <img src="{{ default_variant.images.all.0.image.url }}" alt="{{ default_variant.name|default:product.name }}"
                 class="w-full object-contain object-center transition-opacity duration-500 group-hover:opacity-0" />
 
             <!-- Back image (on hover) -->
-            {% if product.images.all.1 %}
-            <img src="{{ product.images.all.1.image.url }}" alt="{{ product.name }} - back"
+            {% if default_variant.images.all.1 %}
+            <img src="{{ default_variant.images.all.1.image.url }}" alt="{{ default_variant.name|default:product.name }} - back"
                 class="w-full object-contain object-center absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             {% endif %}
             {% else %}
@@ -31,12 +32,13 @@
         </div>
 
         <div class="card-body mt-4 text-center">
-            <h3 class="text-sm font-medium uppercase tracking-wide mb-1">{{ product.name }}</h3>
+            <h3 class="text-sm font-medium uppercase tracking-wide mb-1">{{ default_variant.name|default:product.name }}</h3>
             <p class="price font-semibold text-gray-900">
-                {{ product.price }} ₽
+                {{ default_variant.price }} ₽
             </p>
         </div>
     </article>
+    {% endwith %}
     {% empty %}
     <p class="col-span-full text-center py-10 text-gray-500">No products found.</p>
     {% endfor %}

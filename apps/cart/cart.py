@@ -65,12 +65,12 @@ class Cart:
         item_key = '_'.join(parts)
 
         # Determine price
-        price = product.price
+        price = Decimal('0')
         if variant_id:
             try:
                 from apps.catalog.models import ProductVariant
                 variant = ProductVariant.objects.get(id=variant_id)
-                price = variant.effective_price
+                price = variant.price or Decimal('0')
             except ProductVariant.DoesNotExist:
                 pass
 
@@ -142,9 +142,7 @@ class Cart:
 
             # Always use current price from DB (not from session) to prevent stale prices
             if variant is not None:
-                current_price = variant.effective_price
-            elif product is not None:
-                current_price = product.price
+                current_price = variant.price or Decimal('0')
             else:
                 current_price = Decimal(item['price'])  # fallback if product deleted
 

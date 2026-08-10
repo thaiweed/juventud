@@ -13,7 +13,10 @@ class ProductListView(ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        queryset = super().get_queryset().exclude(status='hidden').prefetch_related('categories', 'images')
+        queryset = super().get_queryset().exclude(status='hidden').prefetch_related(
+            'categories', 
+            'variants__images'
+        )
         category_slug = self.kwargs.get('slug')
         if category_slug:
             category = get_object_or_404(Category, slug=category_slug)
@@ -45,8 +48,6 @@ class ProductDetailView(DetailView):
             .exclude(status='hidden')
             .prefetch_related(
                 'categories',
-                'images',
-                'sizes',
                 'variants__images',
                 'variants__sizes__size',
             )
@@ -57,47 +58,27 @@ class ProductDetailView(DetailView):
         product = self.object
 
         variants = list(product.variants.all())
-        has_variants = len(variants) > 0
+        variants_data = []
+        for v in variants:
+            variants_data.append({
+                'id': v.id,
+                'name': v.name or product.name,
+                'description': v.description or '',
+                'preview_url': v.preview_image.url if v.preview_image else '',
+                'price': str(v.price or 0),
+                'images': [
+                    {'url': img.image.url, 'alt': img.alt_text or v.name or product.name}
+                    for img in v.images.all()
+                ],
+                'sizes': [
+                    {'id': vs.size_id, 'name': vs.size.name, 'available': vs.available}
+                    for vs in v.sizes.all()
+                ],
+            })
 
-        # ── Данные для Alpine.js ──────────────────────────
-        if has_variants:
-            variants_data = []
-            for v in variants:
-                variants_data.append({
-                    'id': v.id,
-                    'name': v.name_override if v.name_override else product.name,
-                    'description': v.description_override if v.description_override else product.description,
-                    'preview_url': v.preview_image.url if v.preview_image else '',
-                    'price': str(v.effective_price),
-                    'images': [
-                        {'url': img.image.url, 'alt': img.alt_text or product.name}
-                        for img in v.images.all()
-                    ],
-                    'sizes': [
-                        {'id': vs.size_id, 'name': vs.size.name, 'available': vs.available}
-                        for vs in v.sizes.all()
-                    ],
-                })
-
-            context['product_variants_json'] = json.dumps(variants_data)
-            context['has_variants'] = True
-            context['default_price'] = str(product.price)
-
-        else:
-            # Режим без вариантов — старая логика
-            images_data = [
-                {'url': img.image.url, 'alt': img.alt_text or product.name}
-                for img in product.images.all()
-            ]
-            sizes_data = [
-                {'id': s.id, 'name': s.name, 'available': True}
-                for s in product.sizes.all()
-            ]
-            context['product_images_json'] = json.dumps(images_data)
-            context['product_sizes_json'] = json.dumps(sizes_data)
-            context['has_variants'] = False
-            context['default_price'] = str(product.price)
-
+        context['product_variants_json'] = json.dumps(variants_data)
+        context['has_multiple_colors'] = len(variants) > 1
+        context['default_price'] = str(variants[0].price) if variants and variants[0].price else '0'
         return context
 
     def get_template_names(self):
