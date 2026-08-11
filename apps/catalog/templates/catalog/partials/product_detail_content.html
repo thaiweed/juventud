@@ -150,12 +150,12 @@
 
                 {% if product.status == 'sold_out' %}
                 <button type="button" disabled
-                    class="w-full bg-gray-200 text-gray-500 py-5 md:py-4 uppercase tracking-widest font-medium cursor-not-allowed select-none appearance-none rounded-none">
+                    class="w-full bg-gray-200 text-gray-500 py-3 md:py-4 uppercase tracking-widest font-medium cursor-not-allowed select-none appearance-none rounded-none">
                     Sold Out
                 </button>
                 {% else %}
                 <button type="submit"
-                    class="w-full bg-black text-white py-5 md:py-4 uppercase tracking-wider font-medium
+                    class="w-full bg-black text-white py-3 md:py-4 uppercase tracking-wider font-medium
                            hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed appearance-none rounded-none"
                     :disabled="activeSizes.length > 0 && !selectedSizeId">
                     Add to Cart
