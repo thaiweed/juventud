@@ -9,8 +9,8 @@
                 {% if item.variant and item.variant.images.all %}
                 <img src="{{ item.variant.images.all.0.image.url }}" alt="{{ item.product.name }}"
                     class="w-full h-full object-contain">
-                {% elif item.product.images.all %}
-                <img src="{{ item.product.images.all.0.image.url }}" alt="{{ item.product.name }}"
+                {% elif item.product.variants.all.0.images.all %}
+                <img src="{{ item.product.variants.all.0.images.all.0.image.url }}" alt="{{ item.product.name }}"
                     class="w-full h-full object-contain">
                 {% endif %}
             </div>

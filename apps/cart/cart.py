@@ -109,7 +109,7 @@ class Cart:
         variant_ids = {int(item['variant_id']) for item in self.cart.values() if item.get('variant_id')}
         size_ids = {int(item['size_id']) for item in self.cart.values() if item.get('size_id')}
 
-        products = Product.objects.filter(id__in=product_ids).prefetch_related('images')
+        products = Product.objects.filter(id__in=product_ids).prefetch_related('variants__images')
         product_map = {p.id: p for p in products}
 
         variants = {}
