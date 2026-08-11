@@ -102,6 +102,9 @@
                   hx-swap="outerHTML">
                 {% csrf_token %}
 
+                <!-- Hidden field to pass variant id to cart (ALWAYS REQUIRED NOW) -->
+                <input type="hidden" name="variant_id" :value="selectedVariant ? selectedVariant.id : ''">
+
                 <!-- ── Color selector (only if multiple variants exist) ── -->
                 {% if has_multiple_colors %}
                 <div>
@@ -119,8 +122,6 @@
                             </button>
                         </template>
                     </div>
-                    <!-- Hidden field to pass variant id to cart -->
-                    <input type="hidden" name="variant_id" :value="selectedVariant ? selectedVariant.id : ''">
                 </div>
                 {% endif %}
 
