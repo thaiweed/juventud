@@ -1,5 +1,5 @@
 from django.views.generic import ListView, DetailView
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from .models import Product, Category
@@ -90,4 +90,6 @@ def about_us(request):
     """
     Renders the About Us page with brand history, project members, and photo gallery.
     """
+    if request.headers.get('HX-Request'):
+        return render(request, 'catalog/partials/about_content.html')
     return render(request, 'catalog/about.html')
