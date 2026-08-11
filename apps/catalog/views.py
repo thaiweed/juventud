@@ -85,3 +85,9 @@ class ProductDetailView(DetailView):
         if self.request.headers.get('HX-Request'):
             return ['catalog/partials/product_detail_content.html']
         return super().get_template_names()
+
+def about_us(request):
+    """
+    Renders the About Us page with brand history, project members, and photo gallery.
+    """
+    return render(request, 'catalog/about.html')
