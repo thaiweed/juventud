@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     "nested_admin",
     "adminsortable2",
     "django_ratelimit",
@@ -74,6 +75,7 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.payments",
 ]
+
 
 # CSRF and Proxy HTTPS configuration
 CSRF_TRUSTED_ORIGINS = [

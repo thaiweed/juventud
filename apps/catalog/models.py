@@ -15,6 +15,10 @@ class Category(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('catalog:product_list_by_category', kwargs={'slug': self.slug})
+
     def __str__(self):
         return self.name
 
@@ -62,11 +66,16 @@ class Product(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('catalog:product_detail', kwargs={'slug': self.slug})
+
     class Meta:
         ordering = ['order', 'created_at']
 
     def __str__(self):
         return self.name
+
 
 # ──────────────────────────────────────────────
 #  Цветовые варианты

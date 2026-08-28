@@ -19,8 +19,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-
 from django.views.generic import TemplateView
+from django.contrib.sitemaps.views import sitemap
+
+from apps.catalog.sitemaps import ProductSitemap, CategorySitemap, StaticViewSitemap
+
+sitemaps = {
+    "products": ProductSitemap,
+    "categories": CategorySitemap,
+    "static": StaticViewSitemap,
+}
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -31,7 +39,10 @@ urlpatterns = [
     path("payments/", include("apps.payments.urls", namespace="payments")),
     path("legal/offer/", TemplateView.as_view(template_name="legal/offer.html"), name="legal_offer"),
     path("legal/privacy/", TemplateView.as_view(template_name="legal/privacy.html"), name="legal_privacy"),
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain"), name="robots"),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
 ]
+
 
 if settings.DEBUG:
     import debug_toolbar

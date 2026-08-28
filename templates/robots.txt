@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /nested_admin/
+Disallow: /cart/
+Disallow: /orders/
+Disallow: /payments/
+
+Sitemap: https://juventudonline.store/sitemap.xml
